@@ -1,0 +1,13 @@
+# Ignore automatically generated files.
+venv
+.coverage
+htmlcov/
+
+# Ignore local development files.
+config.yaml
+
+# Ignore Vim swap files.
+*.sw?
+
+# Ignore Python cache files.
+*.pyc
