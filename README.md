@@ -20,7 +20,7 @@ Please follow these steps to setup the development environment:
 
  3. Create a virtual Python environment for development purpose:
 
-        make venv
+        make venv deps
 
  4. Activate the virtual Python environment:
 
