@@ -3,6 +3,7 @@
 
 import argparse
 import copy
+import importlib
 import os
 
 import yaml
@@ -32,6 +33,51 @@ def load_config(config_paths):
     return config
 
 
+def load_plugin(plugin_config):
+    """Construct an object with specified plugin class and parameters.
+
+    The plugin_config parameter must be a dictionary with the following
+    keys:
+
+      - 'plugin': The value for this key must be a string that
+        represents the fully qualified class name of the plugin. The
+        fully qualified class name is in the dotted notation, e.g.,
+        ``pkg.module.ClassName``.
+      - 'params': The value for this key must be a dict that represents
+        the parameters to be passed to the ``__init__`` function of the
+        plugin class. Each key in the dictionary represents the
+        parameter name and each value represents the value of the
+        parameter.
+
+    Arguments:
+        plugin_config (dict): Plugin configuration dictionary.
+
+    Returns:
+        object: An object of type mentioned in the ``plugin`` parameter.
+
+    """
+    # Split the fully qualified class name into module and class names.
+    parts = plugin_config['plugin'].rsplit('.', 1)
+
+    # Validate that the fully qualified class name had at least two
+    # parts: module name and class name.
+    if len(parts) < 2:
+        msg = ('Invalid plugin class name: {}; expected format: '
+               '[<pkg>.]<module>.<class>'.format(plugin_config['plugin']))
+        raise PluginError(msg)
+
+    # Load the specified adapter class from the specified module.
+    plugin_module = importlib.import_module(parts[0])
+    plugin_class = getattr(plugin_module, parts[1])
+
+    # Initialize params to empty dictionary if none was specified.
+    plugin_params = plugin_config.get('params', {})
+
+    # Construct the plugin.
+    plugin = plugin_class(**plugin_params)
+    return plugin
+
+
 def parse_cli(args=None):
     """Parse command line arguments.
 
@@ -59,3 +105,7 @@ def merge_dicts(a, b):
         else:
             c[k] = copy.deepcopy(b[k])
     return c
+
+
+class PluginError(Exception):
+    """Plugin related error."""

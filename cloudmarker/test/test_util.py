@@ -7,6 +7,15 @@ from cloudmarker import util
 from cloudmarker.test import data_path
 
 
+class MockPlugin():
+    """A mock plugin to test plugin loading."""
+
+    def __init__(self, a=1, b=2):
+        """Mock initializer."""
+        self.a = a
+        self.b = b
+
+
 class UtilTest(unittest.TestCase):
     """Tests for util module."""
 
@@ -16,6 +25,39 @@ class UtilTest(unittest.TestCase):
         path3 = os.path.join(data_path, 'missing.yaml')
         config = util.load_config([path1, path2, path3])
         self.assertEqual(config, {'foo': 'bar', 'baz': 'qux'})
+
+    def test_load_plugin_syntax_error(self):
+        with self.assertRaises(util.PluginError):
+            util.load_plugin({'plugin': 'foo'})
+
+    def test_load_plugin_missing_error(self):
+        plugin_config = {
+            'plugin': 'cloudmarker.test.test_util.MissingPlugin'
+        }
+        with self.assertRaises(AttributeError):
+            util.load_plugin(plugin_config)
+
+    def test_load_plugin_without_params(self):
+        plugin_config = {
+            'plugin': 'cloudmarker.test.test_util.MockPlugin'
+        }
+        plugin = util.load_plugin(plugin_config)
+        self.assertIsInstance(plugin, MockPlugin)
+        self.assertEqual(plugin.a, 1)
+        self.assertEqual(plugin.b, 2)
+
+    def test_load_plugin_with_params(self):
+        plugin_config = {
+            'plugin': 'cloudmarker.test.test_util.MockPlugin',
+            'params': {
+                'a': 3,
+                'b': 4,
+            }
+        }
+        plugin = util.load_plugin(plugin_config)
+        self.assertIsInstance(plugin, MockPlugin)
+        self.assertEqual(plugin.a, 3)
+        self.assertEqual(plugin.b, 4)
 
     def test_parse_cli_args_none(self):
         args = util.parse_cli([])
