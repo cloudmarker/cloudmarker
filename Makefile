@@ -34,8 +34,17 @@ coverage: FORCE
 	. ./venv && coverage report --show-missing
 	. ./venv && coverage html
 
-# See pylama.ini for pylama configuration.
+# See pylama.ini for pylama configuration. Pylama is configured to
+# invoke isort to lint import statements. Pylama prints the files where
+# we need to fix the import statements. But it does not tell us the
+# details of the changes to be made to fix them.
+#
+# This is why we invoke isort independently once to show us the changes
+# (in diff format) that we need to make to fix the import statements.
+# Note that this independently invoked isort exits with exit code 0
+# regardless of whether it finds problems with import statements or not.
 lint: FORCE
+	. ./venv && isort --quiet --diff
 	. ./venv && pylama cloudmarker
 
 checks: test coverage lint
