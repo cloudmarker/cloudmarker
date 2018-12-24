@@ -1,18 +1,29 @@
-stores:
-  filestore:
-    plugin: cloudmarker.stores.filestore.FileStore
-    params:
-      path: '/tmp/cloudmarker'
-
 clouds:
   mockcloud:
     plugin: cloudmarker.clouds.mockcloud.MockCloud
 
-mockjob:
-  clouds:
-    - mockcloud
-  stores:
-    - filestore
+stores:
+  filestore:
+    plugin: cloudmarker.stores.filestore.FileStore
 
-jobs:
-  - mockjob
+checks:
+  mockcheck:
+    plugin: cloudmarker.checks.mockcheck.MockCheck
+
+alerts:
+  filestore:
+    plugin: cloudmarker.stores.filestore.FileStore
+
+audits:
+  mockaudit:
+    clouds:
+      - mockcloud
+    stores:
+      - filestore
+    checks:
+      - mockcheck
+    alerts:
+      - filestore
+
+run:
+  - mockaudit

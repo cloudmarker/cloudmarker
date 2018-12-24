@@ -1,7 +1,7 @@
-Cloud Marker
+Cloudmarker
 ============
 
-Cloud Marker is a cloud security monitoring framework.
+Cloudmarker is a cloud security monitoring framework.
 
 
 Setup Development Environment
@@ -30,7 +30,7 @@ Please follow these steps to setup the development environment:
 
         python3 -m cloudmarker
 
-    Right now, it just reads a default configuration and prints it. More
+    Right now, it generates mock data at `/tmp/cloudmarker`. More
     functionality will be added later.
 
  6. Run the unit tests, code coverage, and linters:
