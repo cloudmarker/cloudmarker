@@ -1,0 +1,4 @@
+[run]
+source = .
+concurrency = multiprocessing
+branch = true

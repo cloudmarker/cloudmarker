@@ -26,10 +26,11 @@ rmvenv: FORCE
 	rm -rf ~/.venv/cloudmarker
 
 test: FORCE
-	. ./venv && python3 -m unittest discover -v
+	. ./venv && python3 -m unittest -v
 
 coverage: FORCE
-	. ./venv && coverage run --source . --branch -m unittest discover -v
+	. ./venv && coverage run -m unittest -v
+	. ./venv && coverage combine
 	. ./venv && coverage report --show-missing
 	. ./venv && coverage html
 
