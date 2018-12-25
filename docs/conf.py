@@ -2,18 +2,32 @@
 
 # See http://www.sphinx-doc.org/en/master/config for all config options.
 
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+
+# The package to document with autodoc is in the parent directory, so
+# add it to sys.path. This also helps in importing the package and using
+# its attributes in this file.
+sys.path.insert(0, os.path.abspath('..'))
+
+# To prevent isort, pycodestyle, and pylint from complaining about an
+# import in the middle of the code, we place this import in a try-except
+# block. This is probably a good thing anyway. If we mess up sys.path
+# above, the import failure would be caught and handled gracefully.
+try:
+    import cloudmarker
+except ImportError as e:
+    print('{}: {}'.format(type(e).__name__, str(e)), file=sys.stderr)
+    sys.exit(1)
 
 # Project information.
 project = 'Cloudmarker'
-copyright = '2018, Cloudmarker Authors and Contributors'
-author = 'Cloudmarker Authors and Contributors'
+copyright = '2018, {}'.format(cloudmarker.__author__)
+author = cloudmarker.__author__
 
 # Short version in X.Y format and full release version.
-version = ''
-release = ''
+version = '.'.join(cloudmarker.__version__.split('.')[:2])
+release = cloudmarker.__version__
 
 extensions = ['sphinx.ext.autodoc']
 
@@ -24,7 +38,10 @@ master_doc = 'index'
 language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = None
-html_theme = 'alabaster'
+
+# Do not set a theme so that Read the Docs can choose its default one.
+# html_theme = 'alabaster'
+
 html_static_path = ['_static']
 htmlhelp_basename = 'Cloudmarkerdoc'
 
@@ -41,7 +58,7 @@ man_pages = [
 
 texinfo_documents = [
     (master_doc, 'Cloudmarker', 'Cloudmarker Documentation',
-     author, 'Cloudmarker', 'One line description of project.',
+     author, 'Cloudmarker', cloudmarker.__doc__.splitlines()[0],
      'Miscellaneous'),
 ]
 

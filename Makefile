@@ -46,9 +46,12 @@ coverage: FORCE
 # regardless of whether it finds problems with import statements or not.
 lint: FORCE
 	. ./venv && isort --quiet --diff
-	. ./venv && pylama cloudmarker
+	. ./venv && pylama
 
-checks: test coverage lint
+docs: FORCE
+	. ./venv && cd docs && make html
+
+checks: test coverage lint docs
 
 clean: FORCE
 	find . -name "__pycache__" -exec rm -r {} +

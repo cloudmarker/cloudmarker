@@ -1,5 +1,6 @@
 The MIT License (MIT)
 =====================
+
 Copyright (c) 2018 Cloud Marker Authors and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining

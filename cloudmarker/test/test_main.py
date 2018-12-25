@@ -13,6 +13,4 @@ class MainTest(unittest.TestCase):
         # Run cloudmarker package with only the default base
         # configuration and ensure that it runs without issues.
         import cloudmarker.__main__
-
-        # Check that __version__ is defined.
-        self.assertTrue(len(cloudmarker.__main__.__version__) > 0)
+        self.assertEqual(type(cloudmarker.__main__).__name__, 'module')
