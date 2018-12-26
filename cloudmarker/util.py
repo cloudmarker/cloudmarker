@@ -36,24 +36,50 @@ def load_config(config_paths):
 def load_plugin(plugin_config):
     """Construct an object with specified plugin class and parameters.
 
-    The plugin_config parameter must be a dictionary with the following
-    keys:
+    The ``plugin_config`` parameter must be a dictionary with the
+    following keys:
 
-      - 'plugin': The value for this key must be a string that
-        represents the fully qualified class name of the plugin. The
-        fully qualified class name is in the dotted notation, e.g.,
-        ``pkg.module.ClassName``.
-      - 'params': The value for this key must be a dict that represents
-        the parameters to be passed to the ``__init__`` function of the
-        plugin class. Each key in the dictionary represents the
-        parameter name and each value represents the value of the
-        parameter.
+    - ``plugin``: The value for this key must be a string that
+      represents the fully qualified class name of the plugin. The
+      fully qualified class name is in the dotted notation, e.g.,
+      ``pkg.module.ClassName``.
+    - ``params``: The value for this key must be a :obj:`dict` that
+      represents the parameters to be passed to the ``__init__`` method
+      of the plugin class. Each key in the dictionary represents the
+      parameter name and each value represents the value of the
+      parameter.
+
+    Example:
+        Here is an example usage of this function:
+
+        >>> from cloudmarker import util
+        >>> plugin_config = {
+        ...     'plugin': 'cloudmarker.clouds.mockcloud.MockCloud',
+        ...     'params': {
+        ...         'record_count': 4,
+        ...         'record_types': ('baz', 'qux')
+        ...     }
+        ... }
+        ...
+        >>> plugin = util.load_plugin(plugin_config)
+        >>> print(type(plugin))
+        <class 'cloudmarker.clouds.mockcloud.MockCloud'>
+        >>> for record in plugin.read():
+        ...     print(record['record_num'], record['record_type'])
+        ...
+        0 baz
+        1 qux
+        2 baz
+        3 qux
 
     Arguments:
         plugin_config (dict): Plugin configuration dictionary.
 
     Returns:
         object: An object of type mentioned in the ``plugin`` parameter.
+
+    Raises:
+        PluginError: If plugin class name is invalid.
 
     """
     # Split the fully qualified class name into module and class names.
@@ -97,7 +123,29 @@ def parse_cli(args=None):
 
 
 def merge_dicts(a, b):
-    """Recursively merge two dictionaries."""
+    """Recursively merge two dictionaries.
+
+    The input dictionaries are not modified. A deepcopy of ``a`` is
+    created and then ``b`` is merged into it.
+
+    Example:
+        Here is an example usage of this function:
+
+        >>> from cloudmarker import util
+        >>> a = {'a': 'apple', 'b': 'ball'}
+        >>> b = {'b': 'bat', 'c': 'cat'}
+        >>> c = util.merge_dicts(a, b)
+        >>> print(c == {'a': 'apple', 'b': 'bat', 'c': 'cat'})
+        True
+
+    Arguments:
+        a (dict): First dictionary.
+        b (dict): Second dictionary.
+
+    Returns:
+        dict: Merged dictionary.
+
+    """
     c = copy.deepcopy(a)
     for k in b:
         if (k in a and isinstance(a[k], dict) and isinstance(b[k], dict)):
@@ -108,4 +156,4 @@ def merge_dicts(a, b):
 
 
 class PluginError(Exception):
-    """Plugin related error."""
+    """Represents an error while loading a plugin."""

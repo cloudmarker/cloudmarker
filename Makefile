@@ -27,6 +27,10 @@ rmvenv: FORCE
 	rm -rf ~/.venv/cloudmarker
 
 test: FORCE
+	# Test interactive Python examples in docstrings.
+	. ./venv && find . -name "*.py" ! -name "__main__.py" | \
+	            xargs -n 1 python3 -m doctest
+	# Run unit tests.
 	. ./venv && python3 -m unittest -v
 
 coverage: FORCE
@@ -34,6 +38,8 @@ coverage: FORCE
 	. ./venv && coverage combine
 	. ./venv && coverage report --show-missing
 	. ./venv && coverage html
+	@echo
+	@echo Coverage report: htmlcov/index.html
 
 # See pylama.ini for pylama configuration. Pylama is configured to
 # invoke isort to lint import statements. Pylama prints the files where
@@ -48,8 +54,15 @@ lint: FORCE
 	. ./venv && isort --quiet --diff
 	. ./venv && pylama
 
+# The -M option for sphinx-apidoc puts the package documentation before
+# submodules documentation. Without it, the package documentation is
+# placed after submodules documentation.
 docs: FORCE
+	rm -rf docs/api docs/_build
+	. ./venv && sphinx-apidoc -M -o docs/api cloudmarker cloudmarker/test
 	. ./venv && cd docs && make html
+	@echo
+	@echo Generated documentation: docs/_build/html/index.html
 
 checks: test coverage lint docs
 

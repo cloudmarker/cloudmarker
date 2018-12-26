@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 
-"""Manager of worker processes.
+"""Manager of worker subprocesses.
 
-This module invokes the worker processes that perform the cloud security
-monitoring tasks.
+This module invokes the worker subprocesses that perform the cloud
+security monitoring tasks. Each worker subprocess wraps around a cloud,
+store, check, or alert plugin and executes the plugin in a separate
+subprocess.
 """
 
 
@@ -38,12 +40,20 @@ def main():
 class Audit:
     """Audit manager.
 
-    This class encapsulates a set of worker processes and worker input
-    queues for a single audit configuration.
+    This class encapsulates a set of worker subprocesses and worker
+    input queues for a single audit configuration.
     """
 
     def __init__(self, audit_name, config):
         """Initialize a single audit manager from configuration.
+
+        A single audit definition (from a list of audit definitions
+        under the ``audits`` key in the configuration) is instantiated.
+        Each audit definition contains lists of cloud plugins, store
+        plugins, check plugins, and alert plugins. These plugins are
+        instantiated and multiprocessing queues are set up to take
+        records from one plugin and feed them to another plugin as per
+        the audit workflow.
 
         Arguments:
             audit_name (str): Key name for an audit configuration. This
@@ -51,7 +61,7 @@ class Audit:
             config (dict): Configuration dictionary. This is the
                 entire configuration dictionary that contains
                 top-level keys named ``clouds``, ``stores``, ``checks``,
-                 ``alerts``, ``audits``, ``run``, etc.
+                ``alerts``, ``audits``, ``run``, etc.
         """
         audit_config = config['audits'][audit_name]
 

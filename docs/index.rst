@@ -1,17 +1,16 @@
 .. include:: ../README.rst
 
 
-Welcome to Cloudmarker's documentation!
-=======================================
+API Documentation
+-----------------
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+
+   api/modules
 
 
-
-Indices and tables
-==================
+Indices
+-------
 
 * :ref:`genindex`
 * :ref:`modindex`

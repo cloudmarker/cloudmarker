@@ -22,14 +22,16 @@ class FileStore:
     def write(self, record):
         """Write JSON records to the file system.
 
-        This method is called once for every record read from a cloud.
-        In this example implementation of a store, we simply write the
-        record in JSON format to a file. The list of records is
-        maintained as JSON array in the file. The record type is used to
-        determine the filename.
+        This method is called once for every ``record`` read from a
+        cloud. In this example implementation of a store, we simply
+        write the ``record`` in JSON format to a file. The list of
+        records is maintained as JSON array in the file. The record
+        type, i.e., ``record['record_type']`` is used to determine the
+        filename.
 
-        The records are written to a .tmp file because we don't want to
-        delete the existing complete and useful .json file prematurely.
+        The records are written to a ``.tmp`` file because we don't want
+        to delete the existing complete and useful ``.json`` file
+        prematurely.
 
         Note that other implementations of a store may choose to buffer
         the records in memory instead of writing each record to the
