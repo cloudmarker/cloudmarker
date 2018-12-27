@@ -8,94 +8,133 @@ monitoring tasks.
 """
 
 
-from cloudmarker import util
+import multiprocessing as mp
+
+from cloudmarker import util, workers
 
 
 def main():
     """Run the framework."""
     args = util.parse_cli()
     config = util.load_config(args.config)
-    audits = _create_audit_plugins(config)
-    _run_audits(audits)
 
-
-def _create_audit_plugins(config):
-    """Read configuration and construct all plugins.
-
-    Arguments:
-        config (dict): Framework configuration
-
-    Returns:
-        list: A list of tuples. Each tuple is of the format
-            (cloud_plugin, store_plugins, check_plugins, alert_plugins) where
-            store_plugins, check_plugins, and alert_plugins are lists of
-            plugins of respective types.
-
-    """
+    # Create an audit object for each audit configured to be run.
     audits = []
-
     for audit_name in config['run']:
-        for cloud_name in config['audits'][audit_name]['clouds']:
+        audits.append(Audit(audit_name, config))
 
-            cloud_plugin = util.load_plugin(config['clouds'][cloud_name])
+    # Start all audits.
+    for audit in audits:
+        audit.start()
 
-            store_plugins = [
-                util.load_plugin(config['stores'][store_name])
-                for store_name in config['audits'][audit_name]['stores']
-            ]
-
-            check_plugins = [
-                util.load_plugin(config['checks'][store_name])
-                for store_name in config['audits'][audit_name]['checks']
-            ]
-
-            alert_plugins = [
-                util.load_plugin(config['alerts'][store_name])
-                for store_name in config['audits'][audit_name]['alerts']
-            ]
-
-            audits.append((cloud_plugin, store_plugins, check_plugins,
-                           alert_plugins))
-
-    return audits
+    # Wait for all audits to terminate.
+    for audit in audits:
+        audit.join()
 
 
-def _run_audits(audits):
-    """Run all plugins to perform auditing.
+class Audit:
+    """Audit manager.
 
-    Arguments:
-        audits (list): A list returned by _create_audit_plugins.
-
+    This class encapsulates a set of worker processes and worker input
+    queues for a single audit configuration.
     """
-    # For each cloud configured for auditing ...
-    for cloud, stores, checks, alerts in audits:
 
-        # For each cloud record read from the cloud ...
-        for cloud_record in cloud.read():
+    def __init__(self, audit_name, config):
+        """Initialize a single audit manager from configuration.
 
-            # Write the record in each configured store.
-            for store in stores:
-                store.write(cloud_record)
+        Arguments:
+            audit_name (str): Key name for an audit configuration. This
+                key is looked for in ``config['audits']``.
+            config (dict): Configuration dictionary. This is the
+                entire configuration dictionary that contains
+                top-level keys named ``clouds``, ``stores``, ``checks``,
+                 ``alerts``, ``audits``, ``run``, etc.
+        """
+        audit_config = config['audits'][audit_name]
 
-            # Also feed the record to each checker.
-            for check in checks:
+        # We keep all workers in these lists.
+        self._cloud_workers = []
+        self._store_workers = []
+        self._check_workers = []
+        self._alert_workers = []
 
-                # For each anomaly record obtained from checker ...
-                for check_record in check.eval(cloud_record):
+        # We keep all queues in these lists.
+        self._store_queues = []
+        self._check_queues = []
+        self._alert_queues = []
 
-                    # Send each check record as an alert.
-                    for alert in alerts:
-                        alert.write(check_record)
+        # Create alert workers and queues.
+        for name in audit_config['alerts']:
+            input_queue = mp.Queue()
+            args = (
+                audit_name + '-' + name,
+                util.load_plugin(config['alerts'][name]),
+                input_queue,
+            )
+            worker = mp.Process(target=workers.store_worker, args=args)
+            self._alert_workers.append(worker)
+            self._alert_queues.append(input_queue)
 
-        # Tell each plugin that there is nothing more to do, so that
-        # they perform any final cleanup tasks.
-        cloud.done()
+        # Create check workers and queues.
+        for name in audit_config['checks']:
+            input_queue = mp.Queue()
+            args = (
+                audit_name + '-' + name,
+                util.load_plugin(config['checks'][name]),
+                input_queue,
+                self._alert_queues,
+            )
+            worker = mp.Process(target=workers.check_worker, args=args)
+            self._check_workers.append(worker)
+            self._check_queues.append(input_queue)
 
-        for check in checks:
-            check.done()
+        # Create store workers and queues.
+        for name in audit_config['stores']:
+            input_queue = mp.Queue()
+            args = (
+                audit_name + '-' + name,
+                util.load_plugin(config['stores'][name]),
+                input_queue,
+            )
+            worker = mp.Process(target=workers.store_worker, args=args)
+            self._store_workers.append(worker)
+            self._store_queues.append(input_queue)
 
-        for store in stores:
-            store.done()
+        # Create cloud workers.
+        for name in audit_config['clouds']:
+            input_queue = mp.Queue()
+            args = (
+                audit_name + '-' + name,
+                util.load_plugin(config['clouds'][name]),
+                self._store_queues + self._check_queues
+            )
+            worker = mp.Process(target=workers.cloud_worker, args=args)
+            self._cloud_workers.append(worker)
 
-        for alert in alerts:
-            alert.done()
+    def start(self):
+        """Start audit by starting all workers."""
+        for w in (self._cloud_workers + self._store_workers +
+                  self._check_workers + self._alert_workers):
+            w.start()
+
+    def join(self):
+        """Wait until all workers terminate."""
+        # Wait for cloud workers to terminate.
+        for w in self._cloud_workers:
+            w.join()
+
+        # Stop store workers and check workers.
+        for q in self._store_queues + self._check_queues:
+            q.put(None)
+
+        # Wait for store workers and check workers to terminate.
+        for w in self._store_workers + self._check_workers:
+            w.join()
+
+        # Stop alert workers.
+        for q in self._alert_queues:
+            q.put(None)
+
+        # Wait for alert workers to terminate.
+        for w in self._alert_workers:
+            w.join()
