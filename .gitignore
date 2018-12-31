@@ -2,6 +2,7 @@
 venv
 .coverage
 htmlcov/
+logs
 
 # Ignore local development files.
 config.yaml

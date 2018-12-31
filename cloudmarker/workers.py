@@ -10,6 +10,11 @@ multiprocessing queues to pass records from one plugin class to another.
 """
 
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
 def cloud_worker(worker_name, cloud_plugin, output_queues):
     """Cloud worker function.
 
@@ -18,11 +23,11 @@ def cloud_worker(worker_name, cloud_plugin, output_queues):
         cloud_plugin (object): Cloud plugin object.
         output_queues (list): List of mp.Queue objects to write records to.
     """
-    print('%s: Started' % worker_name)
+    _logger.info('%s: Started', worker_name)
     for record in cloud_plugin.read():
         for q in output_queues:
             q.put(record)
-    print('%s: Stopped' % worker_name)
+    _logger.info('%s: Stopped', worker_name)
 
 
 def store_worker(worker_name, store_plugin, input_queue):
@@ -33,14 +38,14 @@ def store_worker(worker_name, store_plugin, input_queue):
         store_plugin (object): Store plugin object.
         input_queue (multiprocessing.Queue): Queue to read records from.
     """
-    print('%s: Started' % worker_name)
+    _logger.info('%s: Started', worker_name)
     while True:
         record = input_queue.get()
         if record is None:
             store_plugin.done()
             break
         store_plugin.write(record)
-    print('%s: Stopped' % worker_name)
+    _logger.info('%s: Stopped', worker_name)
 
 
 def check_worker(worker_name, check_plugin, input_queue, output_queues):
@@ -52,7 +57,7 @@ def check_worker(worker_name, check_plugin, input_queue, output_queues):
         input_queue (multiprocessing.Queue): Queue to read records from.
         output_queues (list): List of queues to write event records to.
     """
-    print('%s: Started' % worker_name)
+    _logger.info('%s: Started', worker_name)
     while True:
         record = input_queue.get()
         if record is None:
@@ -63,4 +68,4 @@ def check_worker(worker_name, check_plugin, input_queue, output_queues):
             for q in output_queues:
                 q.put(event_record)
 
-    print('%s: Stopped' % worker_name)
+    _logger.info('%s: Stopped', worker_name)

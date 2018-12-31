@@ -8,6 +8,7 @@ monitoring tasks.
 """
 
 
+import logging.config
 import multiprocessing as mp
 
 from cloudmarker import util, workers
@@ -17,6 +18,8 @@ def main():
     """Run the framework."""
     args = util.parse_cli()
     config = util.load_config(args.config)
+
+    logging.config.dictConfig(config['logger'])
 
     # Create an audit object for each audit configured to be run.
     audits = []

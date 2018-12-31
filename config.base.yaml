@@ -27,3 +27,42 @@ audits:
 
 run:
   - mockaudit
+
+
+logger:
+
+  version: 1
+  disable_existing_loggers: false
+
+  formatters:
+    simple:
+      format: "%(asctime)s %(levelname)s %(name)s:%(lineno)d - %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+      stream: ext://sys.stdout
+    file_handler:
+      class: logging.handlers.TimedRotatingFileHandler
+      level: DEBUG
+      formatter: simple
+      filename: logs/cloudmarker.log
+      when: midnight
+      encoding: utf8
+
+  loggers:
+    cloudmarker.workers:
+      level: DEBUG
+      handlers:
+      - console
+      - file_handler
+      propagate: 0
+
+  root:
+    level: DEBUG
+    handlers:
+    - console
+    - file_handler
