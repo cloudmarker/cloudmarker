@@ -105,7 +105,6 @@ class Audit:
 
         # Create cloud workers.
         for name in audit_config['clouds']:
-            input_queue = mp.Queue()
             args = (
                 audit_name + '-' + name,
                 util.load_plugin(config['clouds'][name]),
