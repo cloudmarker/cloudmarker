@@ -27,6 +27,7 @@ def cloud_worker(worker_name, cloud_plugin, output_queues):
     for record in cloud_plugin.read():
         for q in output_queues:
             q.put(record)
+    cloud_plugin.done()
     _logger.info('%s: Stopped', worker_name)
 
 

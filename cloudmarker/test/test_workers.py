@@ -23,6 +23,12 @@ class WorkersTest(unittest.TestCase):
         # Invoke the mock plugin with the worker.
         workers.cloud_worker('foo', plugin, [out_q1, out_q2])
 
+        # Test that the worker invoked the mock plugin's read() method
+        # and finally invoked the mock plugin's done() method.
+        expected_calls = [mock.call.read(),
+                          mock.call.done()]
+        self.assertEqual(plugin.mock_calls, expected_calls)
+
         # Test that the worker has put the two string records in both
         # the test output queues.
         self.assertEqual(out_q1.get(), 'record1')
@@ -78,7 +84,7 @@ class WorkersTest(unittest.TestCase):
         workers.check_worker('foo', plugin, in_q, [out_q1, out_q2])
 
         # Test that the worker invoked the mock plugin's eval() method
-        # twice (once for each input string record) and finally invokd
+        # twice (once for each input string record) and finally invoked
         # the mock plugin's done() method (for the None input).
         expected_calls = [mock.call.eval('record1'),
                           mock.call.eval('record2'),
