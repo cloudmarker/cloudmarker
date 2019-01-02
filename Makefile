@@ -52,6 +52,6 @@ checks: test coverage lint
 clean: FORCE
 	find . -name "__pycache__" -exec rm -r {} +
 	find . -name "*.pyc" -exec rm {} +
-	rm -rf .coverage htmlcov
+	rm -rf .coverage.* .coverage htmlcov
 
 FORCE:

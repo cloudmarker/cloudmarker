@@ -1,6 +1,7 @@
 # Ignore automatically generated files.
 venv
 .coverage
+.coverage.*
 htmlcov/
 
 # Ignore local development files.
