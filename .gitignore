@@ -6,6 +6,12 @@ htmlcov/
 logs/
 _build/
 
+# Ignore files generated due to releases.
+uservenv
+build/
+cloudmarker.egg-info/
+dist/
+
 # Ignore local development files.
 config.yaml
 

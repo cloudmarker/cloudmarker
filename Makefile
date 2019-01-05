@@ -28,8 +28,9 @@ rmvenv: FORCE
 
 test: FORCE
 	# Test interactive Python examples in docstrings.
-	. ./venv && find . -name "*.py" ! -name "__main__.py" | \
-	            xargs -n 1 python3 -m doctest
+	. ./venv && \
+	    find . -name "*.py" ! -name "setup.py" ! -name "__main__.py" | \
+	    xargs -n 1 python3 -m doctest
 	# Run unit tests.
 	. ./venv && python3 -m unittest -v
 
@@ -66,9 +67,59 @@ docs: FORCE
 
 checks: test coverage lint docs
 
+# Targets to build and upload a new release.
+dist: clean
+	. ./venv && python3 setup.py sdist bdist_wheel
+
+upload: dist
+	. ./venv && twine upload dist/*
+
+test-upload: dist
+	. ./venv && \
+	    twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+# Create a new virtual environment to check `pip3 install cloudmarker`
+# works fine from a user's perspective.
+uservenv: FORCE
+	python3 -m venv ~/.venv/cloudmarker-user
+	echo . ~/.venv/cloudmarker-user/bin/activate > uservenv
+
+rmuservenv: FORCE
+	rm -rf ~/.venv/cloudmarker-user
+
+install:
+	@echo
+	@echo Testing source distribution from PyPI ...
+	@echo
+	make smoke-test PIP_OPTS="--no-binary :all:"
+	@echo
+	@echo Testing wheel distribution from PyPI ...
+	@echo
+	make smoke-test
+
+test-install:
+	@echo
+	@echo Testing source distribution from Test PyPI ...
+	@echo
+	make smoke-test PIP_OPTS="\
+	    --no-binary :all: \
+	    --index-url https://test.pypi.org/simple/ \
+	    --extra-index-url https://pypi.org/simple cloudmarker"
+	@echo
+	@echo Testing wheel distribution from Test PyPI ...
+	@echo
+	make smoke-test PIP_OPTS="\
+	     --index-url https://test.pypi.org/simple/ \
+	     --extra-index-url https://pypi.org/simple cloudmarker"
+
+smoke-test: rmuservenv uservenv
+	. ./uservenv && pip3 install $(PIP_OPTS) --no-cache-dir cloudmarker
+	. ./uservenv && cd /tmp && python3 -m cloudmarker --help
+	. ./uservenv && cd /tmp && cloudmarker --help
+
 clean: FORCE
 	find . -name "__pycache__" -exec rm -r {} +
 	find . -name "*.pyc" -exec rm {} +
-	rm -rf .coverage.* .coverage htmlcov
+	rm -rf .coverage.* .coverage htmlcov build cloudmarker.egg-info dist
 
 FORCE:

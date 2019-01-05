@@ -1,0 +1,3 @@
+# Installation from source distribution depends on requirements.txt
+# because setup.py reads this file.
+include requirements.txt
