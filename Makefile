@@ -51,7 +51,7 @@ coverage: FORCE
 # (in diff format) that we need to make to fix the import statements.
 # Note that this independently invoked isort exits with exit code 0
 # regardless of whether it finds problems with import statements or not.
-lint: FORCE
+lint: clean
 	. ./venv && isort --quiet --diff
 	. ./venv && pylama
 
