@@ -1,38 +1,37 @@
-"""GCP cloud plugin.
+"""Google Cloud Platform (GCP) plugin to read GCP infrastructure data.
 
-This module defines the GCPCloud class that contains the methods to
-pull data from Google cloud and return it to the calling manager.
+This module defines the :class:`GCPCloud` class that retrieves data from
+Google Cloud Platform.
 """
+
 
 import json
 
 from google.oauth2 import service_account
 from googleapiclient import discovery
 
-# _GCP_SCOPES list defines the scopes which service account client can invoke
-# with the provided credentials. Currently GCPCloud module only fetches
-# Firewall and VM instances related information from the specified project, so
-# this list contains scope as compute.readonly. More information about scopes
-# can be located at
-# https://developers.google.com/identity/protocols/googlescopes
 _GCP_SCOPES = ['https://www.googleapis.com/auth/compute.readonly']
+"""OAuth 2.0 scopes for Google APIs required by this plugin.
+
+See https://developers.google.com/identity/protocols/googlescopes for
+more details on OAuth 2.0 scopes for Google APIs."""
 
 
 class GCPCloud:
     """GCP cloud plugin."""
 
     def __init__(self, service_account_key_path, zone):
-        """Initialize the class with specified connection parameters.
+        """Create an instance of :class:`GCPCloud` plugin.
 
         Arguments:
-            service_account_key_path (str): Location of service account key
-              json file.
-            zone (str): The name of the zone for current project.
+            service_account_key_path (str): Path of the service account
+                key file for a project.
+            zone (str): Zone of GCP Project, e.g., ``us-east1-b``.
         """
         self._service_account_key_path = service_account_key_path
         self._zone = zone
 
-        # Service account key file also have project name under the key
+        # Service account key file also has the project name under the key
         # project_id. We will use this key file to get the project name for
         # this request.
         with open(self._service_account_key_path) as f:
@@ -54,14 +53,15 @@ class GCPCloud:
         self._compute_resource = self._get_resource('compute', 'v1')
 
     def _get_resource(self, service_name, version='v1'):
-        """Construct and return Resource object for interacting with an API.
+        """Create a ``Resource`` object for interacting with Google APIs.
 
         Arguments:
             service_name (str): Name of the service of resource object.
             version (str): Version of the API for resource object.
 
         Returns:
-            Resource object for interacting with the API.
+            googleapiclient.discovery.Resource: Resource object for
+                interacting with Google APIs.
 
         """
         # cache_discovery is boolean keyword argument that tells builder
@@ -72,10 +72,11 @@ class GCPCloud:
                                cache_discovery=False)
 
     def _get_firewall_rules(self):
-        """Query the compute resource and returns firewall rules.
+        """Query the compute resource and return firewall rules.
 
         Returns:
-            list: Firewall rules for specified project.
+            list: A list of :obj:`dict` objects where each :obj:`dict`
+                object contains a firewall rule.
 
         """
         # Get firewall resource from the compute resource
@@ -110,7 +111,8 @@ class GCPCloud:
         """Query the compute resource and returns instance list.
 
         Returns:
-            list: VM instances for specified project.
+            list: A list of :obj:`dict` objects where each :obj:`dict`
+                object contains details of a virtual machine instance.
 
         """
         # Get instance resource to get the list of instances for a project and
@@ -143,13 +145,10 @@ class GCPCloud:
         return instances
 
     def read(self):
-        """Return a record.
-
-        This method interacts with different resources and yields firewall
-        rules and instances for specified project.
+        """Return a GCP infrastructure configuration record.
 
         Yields:
-            dict: Firewall rules and VM instances.
+            dict: Firewall rule or VM instance configuration data.
 
         """
         firewall_rules = self._get_firewall_rules()
@@ -157,13 +156,16 @@ class GCPCloud:
 
         for rule in firewall_rules:
             rule.update({'record_type': 'firewall_rule'})
-            print(rule)
             yield rule
 
         for instance in instances:
             instance.update({'record_type': 'compute_instance'})
-            print(instance)
             yield instance
 
     def done(self):
-        """Perform clean up tasks."""
+        """Perform clean up tasks.
+
+        Currently, this method does nothing because there are no clean
+        up tasks associated with the :class:`GCPCloud` plugin. This
+        may change in future.
+        """
