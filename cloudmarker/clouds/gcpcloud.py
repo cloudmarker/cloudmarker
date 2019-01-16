@@ -150,6 +150,43 @@ class GCPCloud:
         Yields:
             dict: Firewall rule or VM instance configuration data.
 
+        Here is an example of a firewall rule record :obj:`dict` yielded
+        by this method:
+
+        .. code:: python
+
+            {
+              "kind": "compute#firewall",
+              "id": "7890789078907890",
+              "creationTimestamp": "2018-12-19T01:43:51.988-08:00",
+              "name": "default-allow-ss",
+              "description": "str",
+              "network": "https://www.googleapis.com/compute/v1/projects/foo/global/networks/default",
+              "priority": 1000,
+              "sourceRanges": [
+                "0.0.0.0/0"
+              ],
+              "targetTags": [
+                "https-server"
+              ],
+              "allowed": [
+                {
+                  "IPProtocol": "tcp",
+                  "ports": [
+                    "80",
+                    "8080-8090"
+                  ]
+                }
+              ],
+              "direction": "INGRESS",
+              "logConfig": {
+                "enable": bool
+              },
+              "disabled": bool,
+              "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/global/firewalls/default-allow-https",
+              "record_type": "firewall_rule"
+            }
+
         """
         firewall_rules = self._get_firewall_rules()
         instances = self._get_instances()
