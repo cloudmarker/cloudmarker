@@ -161,7 +161,8 @@ class GCPCloud:
               "creationTimestamp": "2018-12-19T01:43:51.988-08:00",
               "name": "default-allow-ss",
               "description": "str",
-              "network": "https://www.googleapis.com/compute/v1/projects/foo/global/networks/default",
+              "network": "https://www.googleapis.com/compute/v1/"
+                         "projects/foo/global/networks/default",
               "priority": 1000,
               "sourceRanges": [
                 "0.0.0.0/0"
@@ -183,7 +184,8 @@ class GCPCloud:
                 "enable": bool
               },
               "disabled": bool,
-              "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/global/firewalls/default-allow-https",
+              "selfLink": "https://www.googleapis.com/compute/v1/"
+                          "projects/foo/global/firewalls/default-allow-https",
               "record_type": "firewall_rule"
             }
 
