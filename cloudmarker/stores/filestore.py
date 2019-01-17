@@ -46,18 +46,24 @@ class FileStore:
         """
         record_type = record['record_type']
 
-        # If this is the first time we have encountered this
-        # record_type, we create a new file for it and write an opening
-        # bracket to start a JSON array.
         tmp_file_path = os.path.join(self._path, record_type) + '.tmp'
         if record_type not in self._record_types:
+            # If this is the first time we have encountered this
+            # record_type, we create a new file for it and write an
+            # opening bracket to start a JSON array.
             with open(tmp_file_path, 'w') as f:
                 f.write('[\n')
+            delim = ''
+        else:
+            # If this is not the first record of its record type, then
+            # we need to separate this record from the previous record
+            # with a comma to form a valid JSON array.
+            delim = ',\n'
 
         # Write the record dictionary as JSON object literal.
         self._record_types.add(record_type)
         with open(tmp_file_path, 'a') as f:
-            f.write(json.dumps(record, indent=2) + ',\n')
+            f.write(delim + json.dumps(record, indent=2))
 
     def done(self):
         """Perform final cleanup tasks.

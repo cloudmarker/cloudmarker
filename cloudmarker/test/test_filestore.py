@@ -1,6 +1,7 @@
 """Tests for filestore plugin."""
 
 
+import json
 import os
 import pathlib
 import shutil
@@ -62,14 +63,40 @@ class FileStoreTest(unittest.TestCase):
         # remove all junk files created after every test
         user = os.getenv("USER")
         p = [
-            "/tmp/abc",
-            os.path.expanduser("~/caramel_l33t"),
-            os.path.expanduser("~/caramel_tpb"),
-            "~{}".format(user),
-            "~"
+            '/tmp/abc',
+            os.path.expanduser('~/caramel_l33t'),
+            os.path.expanduser('~/caramel_tpb'),
+            '~{}'.format(user),
+            '~',
+            'test_tmp'
         ]
 
         for path in p:
             if pathlib.Path(path).exists():
                 # delete the directory recursively
                 shutil.rmtree(path)
+
+    def test_makedirs(self):
+        file_store_path = 'test_tmp'
+        filestore.FileStore(path=file_store_path)
+        self.assertTrue(os.path.isdir(file_store_path))
+
+    def test_write(self):
+        file_store_path = 'test_tmp'
+        f = filestore.FileStore(path=file_store_path)
+        records = [
+            {'record_type': 'alpha', 'a': 'apple'},
+            {'record_type': 'alpha', 'b': 'ball'},
+            {'record_type': 'alpha', 'c': 'cat'},
+        ]
+
+        # Write the records.
+        for record in records:
+            f.write(record)
+        f.done()
+
+        # Read the records.
+        with open(os.path.join(file_store_path, 'alpha.json')) as f:
+            read_records = json.load(f)
+
+        self.assertEqual(read_records, records)
