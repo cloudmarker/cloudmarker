@@ -9,6 +9,8 @@ stores:
 checks:
   mockcheck:
     plugin: cloudmarker.checks.mockcheck.MockCheck
+  firewallcheck:
+    plugin: cloudmarker.checks.firewallcheck.FirewallCheck
 
 alerts:
   filestore:
