@@ -3,6 +3,7 @@
 
 import json
 import os
+import os.path
 
 
 class FileStore:
@@ -15,9 +16,9 @@ class FileStore:
             path (str): Path of directory where files are written to.
 
         """
-        self._path = path
+        self._path = os.path.expanduser(path)
         self._record_types = set()
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(self._path, exist_ok=True)
 
     def write(self, record):
         """Write JSON records to the file system.
