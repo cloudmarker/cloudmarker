@@ -21,7 +21,7 @@ deps: FORCE
 	touch venv
 	. ./venv && pip3 install -r requirements.txt
 	. ./venv && pip3 install -r dev-requirements.txt
-	mkdir logs
+	mkdir -p logs
 
 rmvenv: FORCE
 	rm -rf ~/.venv/cloudmarker
