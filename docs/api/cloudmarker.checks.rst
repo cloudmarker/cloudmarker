@@ -9,6 +9,14 @@ cloudmarker.checks package
 Submodules
 ----------
 
+cloudmarker.checks.firewallcheck module
+---------------------------------------
+
+.. automodule:: cloudmarker.checks.firewallcheck
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.checks.mockcheck module
 -----------------------------------
 
