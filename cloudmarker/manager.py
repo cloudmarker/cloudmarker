@@ -70,7 +70,7 @@ class Audit:
     """
 
     def __init__(self, audit_name, config):
-        """Initialize a single audit manager from configuration.
+        """Create an instance of :class:`Audit` from configuration.
 
         A single audit definition (from a list of audit definitions
         under the ``audits`` key in the configuration) is instantiated.

@@ -5,7 +5,7 @@ class MockCloud:
     """Mock cloud plugin for testing purpose."""
 
     def __init__(self, record_count=10, record_types=('foo', 'bar')):
-        """Create an instance of mock cloud plugin.
+        """Create an instance of :class:`MockCloud` plugin.
 
         This plugin generates mock records. The records generated
         contains two fields:

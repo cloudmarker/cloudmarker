@@ -10,7 +10,7 @@ class FileStore:
     """A plugin to store records on the filesystem."""
 
     def __init__(self, path='/tmp/cloudmarker'):
-        """Initialize object of this class with specified parameters.
+        """Create an instance of :class:`FileStore` plugin.
 
         Arguments:
             path (str): Path of directory where files are written to.

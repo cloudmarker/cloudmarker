@@ -5,7 +5,7 @@ class MockCheck:
     """Mock check plugin for testing purpose."""
 
     def __init__(self, n=3):
-        """Create an instance of mock check plugin.
+        """Create an instance of :class:`MockCheck` plugin.
 
         This plugin checks if the ``record_num`` field of a record is a
         multiple of ``n``.

@@ -14,7 +14,7 @@ class FirewallCheck:
     """
 
     def __init__(self):
-        """Create instance of :class:`FirewallCheck` plugin."""
+        """Create an instance of :class:`FirewallCheck` plugin."""
         # self._rules defines the set of weak/misconfigured
         # firewall rules. Given any firewall rule, is compared with
         # these predefined weak misconfigurations if the rule matches to
