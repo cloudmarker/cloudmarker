@@ -8,7 +8,7 @@ from unittest import mock
 class MainTest(unittest.TestCase):
     """Tests for package execution."""
 
-    @mock.patch('sys.argv', ['cloudmarker', '-c', 'config.base.yaml'])
+    @mock.patch('sys.argv', ['cloudmarker', '-c', 'config.base.yaml', '-f'])
     def test_main(self):
         # Run cloudmarker package with only the default base
         # configuration and ensure that it runs without issues.

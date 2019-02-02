@@ -68,3 +68,6 @@ logger:
     handlers:
     - console
     - file_handler
+
+
+schedule: "00:00"
