@@ -12,17 +12,42 @@ subprocess.
 
 import logging.config
 import multiprocessing as mp
+import time
+
+import schedule
 
 from cloudmarker import util, workers
 
+# Define module-level logger.
+_log = logging.getLogger(__name__)
+
 
 def main():
-    """Run the framework."""
+    """Run the framework based on the schedule."""
     args = util.parse_cli()
     config = util.load_config(args.config)
 
     logging.config.dictConfig(config['logger'])
 
+    # Run the audits according to the schedule set in the configuration if the
+    # 'force' flag is not set in the command line.
+    if args.force:
+        _log.info('Starting job now')
+        job(config)
+    else:
+        _log.info('Scheduled to run job everyday at %s', config['schedule'])
+        schedule.every().day.at(config['schedule']).do(job, config)
+        while True:
+            schedule.run_pending()
+            time.sleep(60)
+
+
+def job(config):
+    """Run the audits.
+
+    Arguments:
+        config (dict): Configuration dictionary.
+    """
     # Create an audit object for each audit configured to be run.
     audits = []
     for audit_name in config['run']:

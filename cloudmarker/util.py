@@ -118,6 +118,8 @@ def parse_cli(args=None):
     parser.add_argument('-c', '--config', nargs='+',
                         default=['config.base.yaml', 'config.yaml'],
                         help='Configuration file paths')
+    parser.add_argument('-f', '--force', action='store_true',
+                        help='set this flag to force a run')
     args = parser.parse_args(args)
     return args
 
