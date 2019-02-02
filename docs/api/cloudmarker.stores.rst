@@ -17,4 +17,12 @@ cloudmarker.stores.filestore module
     :undoc-members:
     :show-inheritance:
 
+cloudmarker.stores.mongodbstore module
+--------------------------------------
+
+.. automodule:: cloudmarker.stores.mongodbstore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
