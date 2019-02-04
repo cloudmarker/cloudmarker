@@ -11,19 +11,22 @@ _log = logging.getLogger(__name__)
 class MongoDBStore:
     """A plugin to store records on MongoDB."""
 
-    def __init__(self, host, port, username=None, password=None, db='gcp',
+    def __init__(self, db, username, password, host, port=27017,
                  buffer_size=1000):
         """Create an instance of :class:`MongoDBStore` plugin.
 
-        Arguments:
-            host (str): MongoDB instance host.
-            port (int): MongoDB instance port.
-            username (str): MongoDB instance auth username.
-            password (str): MongoDB instance auth password.
-            db (str): MongoDB database name, default: ``gcp``
-            buffer_size (int): Max number of records to hold in memeory for
-                each record_type.
+        It will use the default port for mongodb 27017 if not specified.
+        The Authentication scheme will be negotiated by MongoDB and the client
+        for v4.0+ to SCRAM-SHA-1 or SCRAM-SHA-256 by default aftere
+        negotiation.
 
+        Arguments:
+            db (str): name of the database
+            username (str): username for the database
+            password (str): password for username to authenticate with the db
+            host (str): hostname for the DB server
+            port (int): port for mongoDB is listening, defaults to 27017
+            buffer_size (int): max buffer before flushing to db
         """
         # pylint: disable=too-many-instance-attributes
 
@@ -33,8 +36,8 @@ class MongoDBStore:
         self._mongodb_password = password
         self._db = db
 
-        self._buffer_size = buffer_size
         self._buffer = {}
+        self._buffer_size = buffer_size
 
         if not (username and password):
             self._client = MongoClient(host=self._mongodb_host,
