@@ -46,13 +46,13 @@ class MongoDBStore:
         # done with the following way. The object specified must have the
         # following functions:
         #     collection(): returns the name of the collection
-        #     validator(): returns a valid string with $jsonSchema that contains
-        #         all the validation properties as specified in the mongodb
-        #         docs.
+        #     validator(): returns a valid string with $jsonSchema that
+        #         contains all the validation properties as specified in the
+        #         mongodb docs.
         #     enforce(): returns one of the strings ``error`` or ``warn``.
-        #         This will be used to define the error level for when the schema
-        #         validation fails. ``error`` will raise an error while ``warn``
-        #         will log that violation in the db server logs.
+        #         This will be used to define the error level for when the
+        #         schema validation fails. ``error`` will raise an error while
+        #         ``warn`` will log that violation in the db server logs.
         for model in kwargs.get('models', []):
             if model.collection() not in self._db.list_collection_names():
                 self._db.create_collection(
