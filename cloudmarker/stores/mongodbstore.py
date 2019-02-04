@@ -3,7 +3,7 @@
 
 import logging
 
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 
 _log = logging.getLogger(__name__)
 
@@ -60,11 +60,17 @@ class MongoDBStore:
         _log.info('Inserting %i documents into collection %s ...',
                   len(records), record_type)
 
-        self._client[self._db][record_type].insert_many(records)
+        try:
+            # Making the bulk insert ordered=False, to make sure that all
+            # of the documents are tried to be inserted. In the default
+            # config, it will fail after the first error
+            res = self._db[record_type].insert_many(records, ordered=False)
+            _log.info('Saved %i out of %i documents into collection: %s',
+                      len(res.inserted_ids), len(records), record_type)
 
-        _log.info('Saved %i documents into collection %s',
-                  len(records), record_type)
-        del records[:]
+            del records[:]
+        except errors.BulkWriteError as bwe:
+            _log.error('Failed to write records with error %s', bwe)
 
     def write(self, record):
         """Write JSON records to the MongoDB collections.
