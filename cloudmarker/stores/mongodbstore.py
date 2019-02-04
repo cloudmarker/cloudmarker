@@ -28,29 +28,17 @@ class MongoDBStore:
             port (int): port for mongoDB is listening, defaults to 27017
             buffer_size (int): max buffer before flushing to db
         """
-        # pylint: disable=too-many-instance-attributes
+        self._client = MongoClient(
+            host=host,
+            port=port,
+            username=username,
+            password=password
+        )
 
-        self._mongodb_host = host
-        self._mongodb_port = port
-        self._mongodb_username = username
-        self._mongodb_password = password
-        self._db = db
+        self._db = self._client[db]
 
         self._buffer = {}
         self._buffer_size = buffer_size
-
-        if not (username and password):
-            self._client = MongoClient(host=self._mongodb_host,
-                                       port=self._mongodb_port,
-                                       connect=False)
-        else:
-            self._client = MongoClient(host=self._mongodb_host,
-                                       port=self._mongodb_port,
-                                       username=username,
-                                       password=password,
-                                       authSource=self._db,
-                                       authMechanism='SCRAM-SHA-256',
-                                       connect=False)
 
     def _flush(self, record_type, records):
         """Perform bulk insert of buffered records into MongoDB collection.
@@ -113,3 +101,7 @@ class MongoDBStore:
         # Flush all the residual records buffers to mongodb collections
         for record_type, records in self._buffer.items():
             self._flush(record_type, records)
+
+        # Close the MongoDB connection when done is called as this will be the
+        # last call to the store plugin.
+        self._client.close()
