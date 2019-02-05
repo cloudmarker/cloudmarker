@@ -11,8 +11,8 @@ _log = logging.getLogger(__name__)
 class MongoDBStore:
     """A plugin to store records on MongoDB."""
 
-    def __init__(self, db, username, password, host, port=27017,
-                 buffer_size=1000, **kwargs):
+    def __init__(self, host='localhost', port=27017, db='cloudmarker',
+                 username=None, password=None, buffer_size=1000, **kwargs):
         """Create an instance of :class:`MongoDBStore` plugin.
 
         It will use the default port for mongodb 27017 if not specified.
@@ -21,12 +21,12 @@ class MongoDBStore:
         negotiation.
 
         Arguments:
+            host (str): hostname for the DB server
+            port (int): port for mongoDB is listening
             db (str): name of the database
             username (str): username for the database
             password (str): password for username to authenticate with the db
-            host (str): hostname for the DB server
-            port (int): port for mongoDB is listening, defaults to 27017
-            buffer_size (int): max buffer before flushing to db
+            buffer_size (int): maximum number of records to buffer
             kwargs (dict): Additional args
                 * models - List of classes for validator and enforcement
                     requirements.
