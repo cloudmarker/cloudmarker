@@ -5,6 +5,8 @@ clouds:
 stores:
   filestore:
     plugin: cloudmarker.stores.filestore.FileStore
+  mongodbstore:
+    plugin: cloudmarker.stores.mongodbstore.MongoDBStore
 
 checks:
   mockcheck:
