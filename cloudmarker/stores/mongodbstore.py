@@ -12,7 +12,7 @@ class MongoDBStore:
     """A plugin to store records on MongoDB."""
 
     def __init__(self, db, username, password, host, port=27017,
-                 buffer_size=1000):
+                 buffer_size=1000, **kwargs):
         """Create an instance of :class:`MongoDBStore` plugin.
 
         It will use the default port for mongodb 27017 if not specified.
@@ -27,6 +27,9 @@ class MongoDBStore:
             host (str): hostname for the DB server
             port (int): port for mongoDB is listening, defaults to 27017
             buffer_size (int): max buffer before flushing to db
+            kwargs (dict): Additional args
+                * models - List of classes for validator and enforcement
+                    requirements.
         """
         self._client = MongoClient(
             host=host,
@@ -36,6 +39,30 @@ class MongoDBStore:
         )
 
         self._db = self._client[db]
+
+        # Create collections if they don't exist based on the document
+        # restrictions the users want to have.
+        #
+        # The collection creation, where the models objects specified,
+        # are done with the following way. The object specified must
+        # have the following functions:
+        #
+        #     collection(): returns the name of the collection
+        #     validator(): returns a valid string with $jsonSchema that
+        #         contains all the validation properties as specified in
+        #         the mongodb docs.
+        #     enforce(): returns one of the strings ``error`` or
+        #         ``warn``. This will be used to define the error level
+        #         for when the schema validation fails. ``error`` will
+        #         raise an error while ``warn`` will log that violation
+        #         in the db server logs.
+        for model in kwargs.get('models', []):
+            if model.collection() not in self._db.list_collection_names():
+                self._db.create_collection(
+                    model.collection(),
+                    validator=model.validator(),
+                    validationAction=model.enforce()
+                )
 
         self._buffer = {}
         self._buffer_size = buffer_size
