@@ -9,6 +9,14 @@ cloudmarker.clouds package
 Submodules
 ----------
 
+cloudmarker.clouds.azurecloud module
+------------------------------------
+
+.. automodule:: cloudmarker.clouds.azurecloud
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.clouds.gcpcloud module
 ----------------------------------
 
