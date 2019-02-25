@@ -13,6 +13,7 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
+from msrestazure.azure_exceptions import CloudError
 
 _log = logging.getLogger(__name__)
 
@@ -120,12 +121,16 @@ def _get_doc(iterator, record_type, sub_id):
         dict: A document of type ``record_type``.
 
     """
-    for i, v in enumerate(iterator):
-        doc = v.as_dict()
-        doc['record_type'] = record_type
-        doc['sub_id'] = sub_id
+    try:
+        for i, v in enumerate(iterator):
+            doc = v.as_dict()
+            doc['record_type'] = record_type
+            doc['sub_id'] = sub_id
 
-        _log.info('Found document %s #%d; sub_id: %s; name: %s',
-                  record_type, i, sub_id, doc['name'])
+            _log.info('Found document %s #%d; sub_id: %s; name: %s',
+                      record_type, i, sub_id, doc['name'])
 
-        yield doc
+            yield doc
+    except CloudError as e:
+        _log.error('Failed to fetch details for %s; sub_id: %s; error: %s: %s',
+                   record_type, sub_id, type(e).__name__, e)
