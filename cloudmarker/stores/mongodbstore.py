@@ -29,7 +29,7 @@ class MongoDBStore:
             buffer_size (int): maximum number of records to buffer
             kwargs (dict): Additional args
                 * models - List of classes for validator and enforcement
-                    requirements.
+                requirements.
         """
         self._client = MongoClient(
             host=host,
