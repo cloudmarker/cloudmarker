@@ -21,13 +21,13 @@ _log = logging.getLogger(__name__)
 class AzureCloud:
     """Azure cloud plugin."""
 
-    def __init__(self, tenant_id, client, key, _max_subs=0):
+    def __init__(self, tenant, client, secret, _max_subs=0):
         """Create an instance of :class:`AzureCloud` plugin.
 
         Arguments:
-            tenant_id (str): Azure subscription tenant ID.
+            tenant (str): Azure subscription tenant ID.
             client (str): Azure service principal application ID.
-            key (str): Azure service principal password.
+            secret (str): Azure service principal password.
             _max_subs (int): Maximum number of subscribers to fetch
                 data for if the value is greater than 0.
 
@@ -37,9 +37,9 @@ class AzureCloud:
                 convention of beginning its name with an underscore.
         """
         self._credentials = ServicePrincipalCredentials(
-            tenant=tenant_id,
+            tenant=tenant,
             client_id=client,
-            secret=key,
+            secret=secret,
         )
         self._max_subs = _max_subs
 
