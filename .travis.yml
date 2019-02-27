@@ -4,6 +4,11 @@ python:
   - "3.5"
   - "3.6"
 install:
+  # Install the latest version of setuptools to work around a dependency
+  # resolution issue: https://github.com/cloudmarker/cloudmarker/pull/45
+  #
+  # TODO: Check once in a while if this workaround is still required.
+  - if [ "$TRAVIS_PYTHON_VERSION" = 3.4 ]; then pip install -U setuptools; fi
   - make deps
   - pip install coveralls
 script:
