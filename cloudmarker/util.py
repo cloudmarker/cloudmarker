@@ -103,6 +103,7 @@ def load_plugin(plugin_config):
 
     # Construct the plugin.
     plugin = plugin_class(**plugin_params)
+    plugin.plugin = plugin_config['plugin']
     return plugin
 
 
