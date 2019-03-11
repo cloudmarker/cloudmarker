@@ -58,12 +58,8 @@ logger:
       encoding: utf8
 
   loggers:
-    cloudmarker.workers:
-      level: DEBUG
-      handlers:
-      - console
-      - file_handler
-      propagate: 0
+    adal-python:
+      level: WARNING
 
   root:
     level: INFO
