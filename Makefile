@@ -29,7 +29,8 @@ rmvenv: FORCE
 test: FORCE
 	# Test interactive Python examples in docstrings.
 	. ./venv && \
-	    find . -name "*.py" ! -name "setup.py" ! -name "__main__.py" | \
+	    find . -name "*.py" ! -path "*/build/*" \
+	    ! -name "setup.py" ! -name "__main__.py" | \
 	    xargs -n 1 python3 -m doctest
 	# Run unit tests.
 	. ./venv && python3 -m unittest -v
