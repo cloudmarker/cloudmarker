@@ -66,10 +66,10 @@ logger:
       propagate: 0
 
   root:
-    level: DEBUG
+    level: INFO
     handlers:
-    - console
-    - file_handler
+      - console
+      - file_handler
 
 
 schedule: "00:00"
