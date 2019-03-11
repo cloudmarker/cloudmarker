@@ -194,12 +194,30 @@ class GCPCloud:
         instances = self._get_instances()
 
         for rule in firewall_rules:
-            rule.update({'record_type': 'firewall_rule'})
-            yield rule
+            record = {
+                'raw': rule,
+                'ext': {
+                    'record_type': 'firewall_rule'
+                },
+                'com': {
+                    'cloud_type': 'gcp',
+                    'record_type': 'firewall_rule'
+                }
+            }
+            yield record
 
         for instance in instances:
-            instance.update({'record_type': 'compute_instance'})
-            yield instance
+            record = {
+                'raw': instance,
+                'ext': {
+                    'record_type': 'compute'
+                },
+                'com': {
+                    'cloud_type': 'gcp',
+                    'record_type': 'compute'
+                }
+            }
+            yield record
 
     def done(self):
         """Perform clean up tasks.

@@ -56,59 +56,6 @@ class MongoDBStoreTest(unittest.TestCase):
         mock_method.assert_called_once_with()
 
     @mock.patch('cloudmarker.stores.mongodbstore.MongoClient')
-    def test_validation_with_missing_collection(self, mock_client):
-        # Get a mock that reprensets a DB.
-        mock_db = mock_client()['fake_db']
-
-        # Configure mock DB to pretend that it has some fake collections.
-        collections = ['foo_collection', 'bar_collection']
-        mock_db.list_collection_names = mock.Mock(return_value=collections)
-
-        # Configure a mock validator model for a missing collection.
-        mock_model = mock.Mock()
-        mock_model.collection = mock.Mock(return_value='baz_collection')
-
-        # Create store with the mock model.
-        mongodbstore.MongoDBStore(models=[mock_model])
-
-        # Verify that the client was used to create a collection.
-        mock_db.create_collection.assert_called_once_with(
-            mock_model.collection(),
-            validator=mock_model.validator(),
-            validationAction=mock_model.enforce())
-
-        # Verify that model's methods were exercised.
-        mock_model.collection.assert_called_with()
-        mock_model.validator.assert_called_with()
-        mock_model.enforce.assert_called_with()
-
-    @mock.patch('cloudmarker.stores.mongodbstore.MongoClient')
-    def test_validations_with_existing_collection(self, mock_client):
-        # Get a mock that reprensets a DB.
-        mock_db = mock_client()['fake_db']
-
-        # Configure mock DB to pretend that it has some fake collections.
-        collections = ['foo_collection', 'bar_collection']
-        mock_db.list_collection_names = mock.Mock(return_value=collections)
-
-        # Configure mock DB to pretend that it has the above collections.
-        mock_db.list_collection_names = mock.Mock(return_value=collections)
-
-        # Configure a mock validator model for an existing collection.
-        mock_model = mock.Mock()
-        mock_model.collection = mock.Mock(return_value='foo_collection')
-
-        # Create store with the mock model.
-        mongodbstore.MongoDBStore(models=[mock_model])
-
-        # Verify that the client was _not_ used to create a collection.
-        mock_db.create_collection.assert_not_called()
-
-        # Verify that model's validation methods were _not_ exercised.
-        mock_model.validator.assert_not_called()
-        mock_model.enforce.assert_not_called()
-
-    @mock.patch('cloudmarker.stores.mongodbstore.MongoClient')
     def test_bulk_write_error(self, mock_client):
         from pymongo import errors
 

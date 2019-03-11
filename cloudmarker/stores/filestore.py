@@ -17,7 +17,7 @@ class FileStore:
 
         """
         self._path = os.path.expanduser(path)
-        self._record_types = set()
+        self._worker_names = set()
         os.makedirs(self._path, exist_ok=True)
 
     def write(self, record):
@@ -26,9 +26,9 @@ class FileStore:
         This method is called once for every ``record`` read from a
         cloud. In this example implementation of a store, we simply
         write the ``record`` in JSON format to a file. The list of
-        records is maintained as JSON array in the file. The record
-        type, i.e., ``record['record_type']`` is used to determine the
-        filename.
+        records is maintained as JSON array in the file. The origin
+        worker name in ``record['com']['origin_worker']`` is used to
+        determine the filename.
 
         The records are written to a ``.tmp`` file because we don't want
         to delete the existing complete and useful ``.json`` file
@@ -44,12 +44,12 @@ class FileStore:
             record (dict): Data to write to the file system.
 
         """
-        record_type = record['record_type']
+        worker_name = record['com']['origin_worker']
 
-        tmp_file_path = os.path.join(self._path, record_type) + '.tmp'
-        if record_type not in self._record_types:
+        tmp_file_path = os.path.join(self._path, worker_name) + '.tmp'
+        if worker_name not in self._worker_names:
             # If this is the first time we have encountered this
-            # record_type, we create a new file for it and write an
+            # worker_name, we create a new file for it and write an
             # opening bracket to start a JSON array.
             with open(tmp_file_path, 'w') as f:
                 f.write('[\n')
@@ -61,7 +61,7 @@ class FileStore:
             delim = ',\n'
 
         # Write the record dictionary as JSON object literal.
-        self._record_types.add(record_type)
+        self._worker_names.add(worker_name)
         with open(tmp_file_path, 'a') as f:
             f.write(delim + json.dumps(record, indent=2))
 
@@ -78,12 +78,12 @@ class FileStore:
         remaining records in a buffer.
 
         """
-        for record_type in self._record_types:
+        for worker_name in self._worker_names:
             # End the JSON array by writing a closing bracket.
-            tmp_file_path = os.path.join(self._path, record_type) + '.tmp'
+            tmp_file_path = os.path.join(self._path, worker_name) + '.tmp'
             with open(tmp_file_path, 'a') as f:
                 f.write(']\n')
 
             # Rename the temporary file to a JSON file.
-            json_file_path = os.path.join(self._path, record_type) + '.json'
+            json_file_path = os.path.join(self._path, worker_name) + '.json'
             os.rename(tmp_file_path, json_file_path)

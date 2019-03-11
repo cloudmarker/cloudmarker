@@ -31,6 +31,10 @@ def cloud_worker(worker_name, cloud_plugin, output_queues):
     """
     _logger.info('%s: Started', worker_name)
     for record in cloud_plugin.read():
+        record.setdefault('com', {})
+        record['com']['origin_worker'] = worker_name
+        record['com']['origin_type'] = 'cloud'
+        record['com']['cloud_worker'] = worker_name
         for q in output_queues:
             q.put(record)
     cloud_plugin.done()
@@ -63,6 +67,8 @@ def store_worker(worker_name, store_plugin, input_queue):
         if record is None:
             store_plugin.done()
             break
+        record.setdefault('com', {})
+        record['com']['store_worker'] = worker_name
         store_plugin.write(record)
     _logger.info('%s: Stopped', worker_name)
 
@@ -100,7 +106,10 @@ def check_worker(worker_name, check_plugin, input_queue, output_queues):
             break
 
         for event_record in check_plugin.eval(record):
+            event_record.setdefault('com', {})
+            event_record['com']['origin_worker'] = worker_name
+            event_record['com']['origin_type'] = 'alert'
+            event_record['com']['check_worker'] = worker_name
             for q in output_queues:
                 q.put(event_record)
-
     _logger.info('%s: Stopped', worker_name)

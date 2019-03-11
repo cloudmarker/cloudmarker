@@ -65,12 +65,14 @@ def load_plugin(plugin_config):
         >>> print(type(plugin))
         <class 'cloudmarker.clouds.mockcloud.MockCloud'>
         >>> for record in plugin.read():
-        ...     print(record['record_num'], record['record_type'])
+        ...     print(record['raw']['data'],
+        ...           record['ext']['type'],
+        ...           record['com']['type'])
         ...
-        0 baz
-        1 qux
-        2 baz
-        3 qux
+        0 baz mock
+        1 qux mock
+        2 baz mock
+        3 qux mock
 
     Arguments:
         plugin_config (dict): Plugin configuration dictionary.

@@ -7,12 +7,12 @@ class MockCheck:
     def __init__(self, n=3):
         """Create an instance of :class:`MockCheck` plugin.
 
-        This plugin checks if the ``record_num`` field of a record is a
+        This plugin checks if the ``data`` field of a mock record is a
         multiple of ``n``.
 
         Arguments:
-            n (int): A number that the record number in mock record must
-                be a multiple of in order to generate an event record.
+            n (int): A number that the record data value in mock record
+                must be a multiple of in order to generate an event record.
 
         """
         self._n = n
@@ -20,13 +20,13 @@ class MockCheck:
     def eval(self, record):
         """Evaluate record to check for multiples of ``n``.
 
-        If ``record['record_num']`` is a multiple of ``n`` (the
+        If ``record['raw']['data']`` is a multiple of ``n`` (the
         parameter with which this plugin was initialized with), then
         generate an event record. Otherwise, do nothing.
 
-        If ``record['record_num']`` is missing, i.e., the key named
-        `record_num` does not exist, then its record number is assumed
-        to be `1`.
+        If ``record['raw']['data]`` is missing, i.e., the key named
+        ``raw`` or ``data`` does not exist, then its record number is
+        assumed to be ``1``.
 
         This is a mock example of a check plugin. In actual check
         plugins, this method would typically check for security issues
@@ -40,13 +40,18 @@ class MockCheck:
             record.
 
         """
-        # If record number is a multiple of self._n, generate an event
-        # record.
-        if record.get('record_num', 1) % self._n == 0:
+        # If record data value is a multiple of self._n, generate an
+        # event record.
+        if record.get('raw', {}).get('data', 1) % self._n == 0:
             yield {
-                'record_type': 'mock_event',
-                'n': self._n,
-                'cloud_record': record,
+                'ext': {
+                    'record_type': 'mock_event',
+                    'n': self._n,
+                    'cloud_record': record
+                },
+                'com': {
+                    'record_type': 'mock_event'
+                }
             }
 
     def done(self):

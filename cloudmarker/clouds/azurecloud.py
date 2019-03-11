@@ -108,29 +108,43 @@ class AzureCloud:
         """
 
 
-def _get_doc(iterator, record_type, sub_id):
+def _get_doc(iterator, azure_record_type, sub_id):
     """Process a list of :class:`msrest.serialization.Model` objects.
 
     Arguments:
         iterator: An iterator like instance of
             :class:`msrest.serialization.Model` objects.
-        record_type (str): Type of the document.
+        azure_record_type (str): Type of document as per Azure vocabulary.
         sub_id (str): Subscription ID.
 
     Yields:
         dict: A document of type ``record_type``.
 
     """
+    # Dictionary to map Azure record types to common record types.
+    record_type_map = {
+        'virtual_machine': 'compute',
+        'nsg': 'firewall_rule',
+    }
+
     try:
         for i, v in enumerate(iterator):
-            doc = v.as_dict()
-            doc['record_type'] = record_type
-            doc['sub_id'] = sub_id
+            doc = {
+                'raw': v.as_dict(),
+                'ext': {
+                    'record_type': azure_record_type,
+                    'sub_id': sub_id
+                },
+                'com': {
+                    'cloud_type': 'azure',
+                    'record_type': record_type_map.get(azure_record_type)
+                }
+            }
 
             _log.info('Found document %s #%d; sub_id: %s; name: %s',
-                      record_type, i, sub_id, doc['name'])
+                      azure_record_type, i, sub_id, doc['raw']['name'])
 
             yield doc
     except CloudError as e:
         _log.error('Failed to fetch details for %s; sub_id: %s; error: %s: %s',
-                   record_type, sub_id, type(e).__name__, e)
+                   azure_record_type, sub_id, type(e).__name__, e)

@@ -21,9 +21,13 @@ def write_to_file(filename):
 
     # dummy data to write
     mp = {
-        "record_type": "dummy",
-        "data": {
-            "test_name": "tilde_filename"
+        'raw': {
+            'data': {
+                'test_name': 'tilde_filename'
+            }
+        },
+        'com': {
+            'origin_worker': 'mock_worker'
         }
     }
 
@@ -55,8 +59,7 @@ class FileStoreTest(unittest.TestCase):
 
     def test_filepath_dir_traversal(self):
         write_to_file("/tmp/cloudmarker/../abc")
-
-        f = pathlib.Path(os.path.join("/tmp/abc", "dummy.json"))
+        f = pathlib.Path(os.path.join("/tmp/abc", "mock_worker.json"))
         self.assertTrue(f.is_file())
 
     def tearDown(self):
@@ -85,9 +88,18 @@ class FileStoreTest(unittest.TestCase):
         file_store_path = 'test_tmp'
         f = filestore.FileStore(path=file_store_path)
         records = [
-            {'record_type': 'alpha', 'a': 'apple'},
-            {'record_type': 'alpha', 'b': 'ball'},
-            {'record_type': 'alpha', 'c': 'cat'},
+            {
+                'raw': {'record_type': 'alpha', 'a': 'apple'},
+                'com': {'origin_worker': 'mock_worker'},
+            },
+            {
+                'raw': {'record_type': 'alpha', 'b': 'ball'},
+                'com': {'origin_worker': 'mock_worker'},
+            },
+            {
+                'raw': {'record_type': 'alpha', 'c': 'cat'},
+                'com': {'origin_worker': 'mock_worker'},
+            }
         ]
 
         # Write the records.
@@ -96,7 +108,7 @@ class FileStoreTest(unittest.TestCase):
         f.done()
 
         # Read the records.
-        with open(os.path.join(file_store_path, 'alpha.json')) as f:
+        with open(os.path.join(file_store_path, 'mock_worker.json')) as f:
             read_records = json.load(f)
 
         self.assertEqual(read_records, records)
