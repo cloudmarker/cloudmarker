@@ -82,7 +82,7 @@ class FileStore:
             # End the JSON array by writing a closing bracket.
             tmp_file_path = os.path.join(self._path, worker_name) + '.tmp'
             with open(tmp_file_path, 'a') as f:
-                f.write(']\n')
+                f.write('\n]\n')
 
             # Rename the temporary file to a JSON file.
             json_file_path = os.path.join(self._path, worker_name) + '.json'
