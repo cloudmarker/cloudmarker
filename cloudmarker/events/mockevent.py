@@ -1,13 +1,13 @@
-"""Mock check plugin for testing purpose."""
+"""Mock event plugin for testing purpose."""
 
 
-class MockCheck:
-    """Mock check plugin for testing purpose."""
+class MockEvent:
+    """Mock event plugin for testing purpose."""
 
     def __init__(self, n=3):
-        """Create an instance of :class:`MockCheck` plugin.
+        """Create an instance of :class:`MockEvent` plugin.
 
-        This plugin checks if the ``data`` field of a mock record is a
+        This plugin events if the ``data`` field of a mock record is a
         multiple of ``n``.
 
         Arguments:
@@ -28,7 +28,7 @@ class MockCheck:
         ``raw`` or ``data`` does not exist, then its record number is
         assumed to be ``1``.
 
-        This is a mock example of a check plugin. In actual check
+        This is a mock example of a event plugin. In actual event
         plugins, this method would typically check for security issues
         in the ``record``.
 
@@ -58,6 +58,6 @@ class MockCheck:
         """Perform cleanup work.
 
         Since this is a mock plugin, this method does nothing. However,
-        a typical check plugin may or may not need to perform cleanup
+        a typical event plugin may or may not need to perform cleanup
         work in this method depending on its nature of work.
         """

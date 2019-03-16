@@ -1,12 +1,12 @@
-"""Firewall Rule Check plugin for GCP Firewall rule record.
+"""Firewall Rule Event plugin for GCP Firewall rule record.
 
-This modules define a :class:`FirewallCheck` that identifies weak Firewall
+This modules define a :class:`FirewallEvent` that identifies weak Firewall
 rules for Google Cloud Platform.
 """
 
 
-class FirewallCheck:
-    """Firewall Rule Check plugin.
+class FirewallEvent:
+    """Firewall Rule Event plugin.
 
     This class identifies weak Firewall rules in the record objects by
     comparing the them with predefined weak Firewall rules
@@ -14,7 +14,7 @@ class FirewallCheck:
     """
 
     def __init__(self):
-        """Create an instance of :class:`FirewallCheck` plugin."""
+        """Create an instance of :class:`FirewallEvent` plugin."""
         # self._rules defines the set of weak/misconfigured
         # firewall rules. Given any firewall rule, is compared with
         # these predefined weak misconfigurations if the rule matches to
@@ -112,6 +112,6 @@ class FirewallCheck:
         """Perform cleanup work.
 
         Currently, this method does nothing because there are no clean
-        up tasks associated with the :class:`FirewallCheck` plugin.
+        up tasks associated with the :class:`FirewallEvent` plugin.
         This may change in future.
         """

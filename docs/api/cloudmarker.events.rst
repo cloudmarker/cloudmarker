@@ -1,7 +1,7 @@
-cloudmarker.checks package
+cloudmarker.events package
 ==========================
 
-.. automodule:: cloudmarker.checks
+.. automodule:: cloudmarker.events
     :members:
     :undoc-members:
     :show-inheritance:
@@ -9,18 +9,18 @@ cloudmarker.checks package
 Submodules
 ----------
 
-cloudmarker.checks.firewallcheck module
+cloudmarker.events.firewallevent module
 ---------------------------------------
 
-.. automodule:: cloudmarker.checks.firewallcheck
+.. automodule:: cloudmarker.events.firewallevent
     :members:
     :undoc-members:
     :show-inheritance:
 
-cloudmarker.checks.mockcheck module
+cloudmarker.events.mockevent module
 -----------------------------------
 
-.. automodule:: cloudmarker.checks.mockcheck
+.. automodule:: cloudmarker.events.mockevent
     :members:
     :undoc-members:
     :show-inheritance:

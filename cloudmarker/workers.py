@@ -73,16 +73,16 @@ def store_worker(worker_name, store_plugin, input_queue):
     _logger.info('%s: Stopped', worker_name)
 
 
-def check_worker(worker_name, check_plugin, input_queue, output_queues):
-    """Worker function for check plugins.
+def event_worker(worker_name, event_plugin, input_queue, output_queues):
+    """Worker function for event plugins.
 
-    This function expects the ``check_plugin`` object to implement a
+    This function expects the ``event_plugin`` object to implement a
     ``eval`` method that accepts a single record as a parameter and
     yields one or more records, and a ``done`` method to perform cleanup
     work in the end.
 
     This function gets records from ``input_queue`` and passes each
-    record to the ``eval`` method of ``check_plugin``. Then it puts each
+    record to the ``eval`` method of ``event_plugin``. Then it puts each
     record yielded by the ``eval`` method into each queue in
     ``output_queues``.
 
@@ -102,14 +102,14 @@ def check_worker(worker_name, check_plugin, input_queue, output_queues):
     while True:
         record = input_queue.get()
         if record is None:
-            check_plugin.done()
+            event_plugin.done()
             break
 
-        for event_record in check_plugin.eval(record):
+        for event_record in event_plugin.eval(record):
             event_record.setdefault('com', {})
             event_record['com']['origin_worker'] = worker_name
             event_record['com']['origin_type'] = 'alert'
-            event_record['com']['check_worker'] = worker_name
+            event_record['com']['event_worker'] = worker_name
             for q in output_queues:
                 q.put(event_record)
     _logger.info('%s: Stopped', worker_name)

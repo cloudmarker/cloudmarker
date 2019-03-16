@@ -63,7 +63,7 @@ class WorkersTest(unittest.TestCase):
                           mock.call.done()]
         self.assertEqual(plugin.mock_calls, expected_calls)
 
-    def test_check_worker(self):
+    def test_event_worker(self):
         # A fake_eval function that returns two fake records: length of
         # input string, and upper-cased input string.
         def fake_eval(s):
@@ -85,7 +85,7 @@ class WorkersTest(unittest.TestCase):
         in_q.put(None)
 
         # Invoke the mock plugin with the worker.
-        workers.check_worker('foo', plugin, in_q, [out_q1, out_q2])
+        workers.event_worker('foo', plugin, in_q, [out_q1, out_q2])
 
         # Test that the worker invoked the mock plugin's eval() method
         # twice (once for each input string record) and finally invoked

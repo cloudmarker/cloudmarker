@@ -8,11 +8,11 @@ stores:
   mongodbstore:
     plugin: cloudmarker.stores.mongodbstore.MongoDBStore
 
-checks:
-  mockcheck:
-    plugin: cloudmarker.checks.mockcheck.MockCheck
-  firewallcheck:
-    plugin: cloudmarker.checks.firewallcheck.FirewallCheck
+events:
+  mockevent:
+    plugin: cloudmarker.events.mockevent.MockEvent
+  firewallevent:
+    plugin: cloudmarker.evengts.firewallevent.FirewallEvent
 
 alerts:
   filestore:
@@ -24,8 +24,8 @@ audits:
       - mockcloud
     stores:
       - filestore
-    checks:
-      - mockcheck
+    events:
+      - mockevent
     alerts:
       - filestore
 

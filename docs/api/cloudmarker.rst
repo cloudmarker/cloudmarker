@@ -11,8 +11,8 @@ Subpackages
 
 .. toctree::
 
-    cloudmarker.checks
     cloudmarker.clouds
+    cloudmarker.events
     cloudmarker.stores
 
 Submodules

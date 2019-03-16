@@ -5,7 +5,7 @@
 
 This module invokes the worker subprocesses that perform the cloud
 security monitoring tasks. Each worker subprocess wraps around a cloud,
-store, check, or alert plugin and executes the plugin in a separate
+store, event, or alert plugin and executes the plugin in a separate
 subprocess.
 """
 
@@ -75,7 +75,7 @@ class Audit:
         A single audit definition (from a list of audit definitions
         under the ``audits`` key in the configuration) is instantiated.
         Each audit definition contains lists of cloud plugins, store
-        plugins, check plugins, and alert plugins. These plugins are
+        plugins, event plugins, and alert plugins. These plugins are
         instantiated and multiprocessing queues are set up to take
         records from one plugin and feed them to another plugin as per
         the audit workflow.
@@ -85,7 +85,7 @@ class Audit:
                 key is looked for in ``config['audits']``.
             config (dict): Configuration dictionary. This is the
                 entire configuration dictionary that contains
-                top-level keys named ``clouds``, ``stores``, ``checks``,
+                top-level keys named ``clouds``, ``stores``, ``events``,
                 ``alerts``, ``audits``, ``run``, etc.
         """
         audit_config = config['audits'][audit_name]
@@ -93,12 +93,12 @@ class Audit:
         # We keep all workers in these lists.
         self._cloud_workers = []
         self._store_workers = []
-        self._check_workers = []
+        self._event_workers = []
         self._alert_workers = []
 
         # We keep all queues in these lists.
         self._store_queues = []
-        self._check_queues = []
+        self._event_queues = []
         self._alert_queues = []
 
         # Create alert workers and queues.
@@ -113,18 +113,18 @@ class Audit:
             self._alert_workers.append(worker)
             self._alert_queues.append(input_queue)
 
-        # Create check workers and queues.
-        for name in audit_config['checks']:
+        # Create event_workers workers and queues.
+        for name in audit_config['events']:
             input_queue = mp.Queue()
             args = (
                 audit_name + '-' + name,
-                util.load_plugin(config['checks'][name]),
+                util.load_plugin(config['events'][name]),
                 input_queue,
                 self._alert_queues,
             )
-            worker = mp.Process(target=workers.check_worker, args=args)
-            self._check_workers.append(worker)
-            self._check_queues.append(input_queue)
+            worker = mp.Process(target=workers.event_worker, args=args)
+            self._event_workers.append(worker)
+            self._event_queues.append(input_queue)
 
         # Create store workers and queues.
         for name in audit_config['stores']:
@@ -143,7 +143,7 @@ class Audit:
             args = (
                 audit_name + '-' + name,
                 util.load_plugin(config['clouds'][name]),
-                self._store_queues + self._check_queues
+                self._store_queues + self._event_queues
             )
             worker = mp.Process(target=workers.cloud_worker, args=args)
             self._cloud_workers.append(worker)
@@ -151,7 +151,7 @@ class Audit:
     def start(self):
         """Start audit by starting all workers."""
         for w in (self._cloud_workers + self._store_workers +
-                  self._check_workers + self._alert_workers):
+                  self._event_workers + self._alert_workers):
             w.start()
 
     def join(self):
@@ -160,12 +160,12 @@ class Audit:
         for w in self._cloud_workers:
             w.join()
 
-        # Stop store workers and check workers.
-        for q in self._store_queues + self._check_queues:
+        # Stop store workers and event workers.
+        for q in self._store_queues + self._event_queues:
             q.put(None)
 
-        # Wait for store workers and check workers to terminate.
-        for w in self._store_workers + self._check_workers:
+        # Wait for store workers and event_workers workers to terminate.
+        for w in self._store_workers + self._event_workers:
             w.join()
 
         # Stop alert workers.
