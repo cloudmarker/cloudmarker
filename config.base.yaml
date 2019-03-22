@@ -24,6 +24,16 @@ alerts:
       to:
         - foo@example.com
       text: foo
+  emailstore:
+    plugin: cloudmarker.stores.emailstore.EmailStore
+    params:
+      host: smtp.example.com
+      port: 25
+      sender: CloudMarker Alert <no-reply@example.com>
+      to:
+        - recipient@example.com
+      subject: Anomaly notification
+      body: default text
 
 audits:
   mockaudit:
@@ -35,6 +45,9 @@ audits:
       - mockevent
     alerts:
       - filestore
+      - emailstore
+
+
 
 run:
   - mockaudit
