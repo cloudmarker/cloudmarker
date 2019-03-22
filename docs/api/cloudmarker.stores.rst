@@ -9,6 +9,14 @@ cloudmarker.stores package
 Submodules
 ----------
 
+cloudmarker.stores.emailalert module
+------------------------------------
+
+.. automodule:: cloudmarker.stores.emailalert
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.stores.filestore module
 -----------------------------------
 

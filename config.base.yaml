@@ -24,6 +24,16 @@ alerts:
       to:
         - foo@example.com
       text: foo
+  emailalert:
+    plugin: cloudmarker.alerts.emailalert.EmailAlert
+    params:
+      host: smtp.example.com
+      port: 25
+      sender: CloudMarker Alert <no-reply@example.com>
+      to:
+        - recipient@example.com
+      subject: Anomaly notification
+      body: default text
 
 audits:
   mockaudit:
@@ -35,10 +45,10 @@ audits:
       - mockevent
     alerts:
       - filestore
+      - emailalert
 
 run:
   - mockaudit
-
 
 logger:
 
@@ -73,6 +83,5 @@ logger:
     handlers:
       - console
       - file_handler
-
 
 schedule: "00:00"
