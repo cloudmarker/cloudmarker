@@ -27,13 +27,17 @@ alerts:
   emailstore:
     plugin: cloudmarker.stores.emailstore.EmailStore
     params:
-      host: smtp.example.com
+      isSSLRequired: False
+      host: smtp.host.example.com
       port: 25
       sender: CloudMarker Alert <no-reply@example.com>
       to:
-        - recipient@example.com
+        - recipient1@example.com
+        - recipient2@example.com
       subject: Anomaly notification
       body: default text
+      username: username
+      password: password
 
 audits:
   mockaudit:
