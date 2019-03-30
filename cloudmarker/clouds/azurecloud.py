@@ -28,7 +28,7 @@ class AzureCloud:
             tenant (str): Azure subscription tenant ID.
             client (str): Azure service principal application ID.
             secret (str): Azure service principal password.
-            _max_subs (int): Maximum number of subscribers to fetch
+            _max_subs (int): Maximum number of subscriptions to fetch
                 data for if the value is greater than 0.
 
                 Note: The ``_max_subs`` argument must be used only in
@@ -55,16 +55,17 @@ class AzureCloud:
         subscription_client = SubscriptionClient(self._credentials)
 
         for i, sub in enumerate(subscription_client.subscriptions.list()):
-            sub_id = str(sub.subscription_id)
-            _log.info('Found subscriber #%d; sub_id: %s; display_name: %s',
-                      i, sub_id, sub.display_name)
+            subscription_id = str(sub.subscription_id)
+            _log.info('Found subscription #%d; subscription_id: %s; '
+                      'display_name: %s',
+                      i, subscription_id, sub.display_name)
 
-            # Initialize Azure clients for the current subscriber.
+            # Initialize Azure clients for the current subscription.
             creds = self._credentials
-            compute_client = ComputeManagementClient(creds, sub_id)
-            network_client = NetworkManagementClient(creds, sub_id)
-            storage_client = StorageManagementClient(creds, sub_id)
-            resource_client = ResourceManagementClient(creds, sub_id)
+            compute_client = ComputeManagementClient(creds, subscription_id)
+            network_client = NetworkManagementClient(creds, subscription_id)
+            storage_client = StorageManagementClient(creds, subscription_id)
+            resource_client = ResourceManagementClient(creds, subscription_id)
 
             # Get iterators for each type of data.
             vm_list = compute_client.virtual_machines.list_all()
@@ -79,20 +80,22 @@ class AzureCloud:
 
             # Retrieve data using each iterator.
             for doc in itertools.chain(
-                    _get_doc(vm_list, 'virtual_machine', sub_id),
-                    _get_doc(app_gw_list, 'app_gateway', sub_id),
-                    _get_doc(lb_iter, 'lb', sub_id),
-                    _get_doc(nic_list, 'nic', sub_id),
-                    _get_doc(nsg_list, 'nsg', sub_id),
-                    _get_doc(pubip_list, 'public_ip', sub_id),
-                    _get_doc(storage_account_list, 'storage_account', sub_id),
-                    _get_doc(resource_group_list, 'resource_group', sub_id),
-                    _get_doc(resource_list, 'resource', sub_id),
+                    _get_doc(vm_list, 'virtual_machine', subscription_id),
+                    _get_doc(app_gw_list, 'app_gateway', subscription_id),
+                    _get_doc(lb_iter, 'lb', subscription_id),
+                    _get_doc(nic_list, 'nic', subscription_id),
+                    _get_doc(nsg_list, 'nsg', subscription_id),
+                    _get_doc(pubip_list, 'public_ip', subscription_id),
+                    _get_doc(storage_account_list, 'storage_account',
+                             subscription_id),
+                    _get_doc(resource_group_list, 'resource_group',
+                             subscription_id),
+                    _get_doc(resource_list, 'resource', subscription_id),
             ):
                 yield doc
 
             # Break after pulling data for self._max_subs number of
-            # subscribers. Note that if self._max_subs is 0 or less,
+            # subscriptions. Note that if self._max_subs is 0 or less,
             # then the following condition never evaluates to True.
             if i + 1 == self._max_subs:
                 _log.info('Exiting read due to _max_subs: %d',
@@ -108,14 +111,14 @@ class AzureCloud:
         """
 
 
-def _get_doc(iterator, azure_record_type, sub_id):
+def _get_doc(iterator, azure_record_type, subscription_id):
     """Process a list of :class:`msrest.serialization.Model` objects.
 
     Arguments:
         iterator: An iterator like instance of
             :class:`msrest.serialization.Model` objects.
         azure_record_type (str): Type of document as per Azure vocabulary.
-        sub_id (str): Subscription ID.
+        subscription_id (str): Subscription ID.
 
     Yields:
         dict: A document of type ``record_type``.
@@ -133,7 +136,7 @@ def _get_doc(iterator, azure_record_type, sub_id):
                 'raw': v.as_dict(),
                 'ext': {
                     'record_type': azure_record_type,
-                    'sub_id': sub_id
+                    'subscription_id': subscription_id
                 },
                 'com': {
                     'cloud_type': 'azure',
@@ -141,10 +144,12 @@ def _get_doc(iterator, azure_record_type, sub_id):
                 }
             }
 
-            _log.info('Found document %s #%d; sub_id: %s; name: %s',
-                      azure_record_type, i, sub_id, doc['raw']['name'])
+            _log.info('Found document %s #%d; subscription_id: %s; name: %s',
+                      azure_record_type, i, subscription_id,
+                      doc['raw']['name'])
 
             yield doc
     except CloudError as e:
-        _log.error('Failed to fetch details for %s; sub_id: %s; error: %s: %s',
-                   azure_record_type, sub_id, type(e).__name__, e)
+        _log.error('Failed to fetch details for %s; subscription_id: %s; '
+                   'error: %s: %s',
+                   azure_record_type, subscription_id, type(e).__name__, e)
