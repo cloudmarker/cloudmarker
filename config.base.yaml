@@ -17,6 +17,13 @@ events:
 alerts:
   filestore:
     plugin: cloudmarker.stores.filestore.FileStore
+  slackalert:
+    plugin: cloudmarker.alerts.slackalert.SlackAlert
+    params:
+      bot_user_token: foo-bot-token
+      to:
+        - foo@example.com
+      text: foo
 
 audits:
   mockaudit:
