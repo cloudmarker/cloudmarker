@@ -12,7 +12,7 @@ queues necessary to pass records from one plugin class to another.
 
 import logging
 
-_logger = logging.getLogger(__name__)
+_log = logging.getLogger(__name__)
 
 
 def cloud_worker(worker_name, cloud_plugin, output_queues):
@@ -29,7 +29,7 @@ def cloud_worker(worker_name, cloud_plugin, output_queues):
         output_queues (list): List of :class:`multiprocessing.Queue`
             objects to write records to.
     """
-    _logger.info('%s: Started', worker_name)
+    _log.info('%s: Started', worker_name)
     for record in cloud_plugin.read():
         record.setdefault('com', {})
         record['com']['origin_worker'] = worker_name
@@ -38,7 +38,7 @@ def cloud_worker(worker_name, cloud_plugin, output_queues):
         for q in output_queues:
             q.put(record)
     cloud_plugin.done()
-    _logger.info('%s: Stopped', worker_name)
+    _log.info('%s: Stopped', worker_name)
 
 
 def store_worker(worker_name, store_plugin, input_queue):
@@ -61,7 +61,7 @@ def store_worker(worker_name, store_plugin, input_queue):
         store_plugin (object): Store plugin object.
         input_queue (multiprocessing.Queue): Queue to read records from.
     """
-    _logger.info('%s: Started', worker_name)
+    _log.info('%s: Started', worker_name)
     while True:
         record = input_queue.get()
         if record is None:
@@ -70,7 +70,7 @@ def store_worker(worker_name, store_plugin, input_queue):
         record.setdefault('com', {})
         record['com']['store_worker'] = worker_name
         store_plugin.write(record)
-    _logger.info('%s: Stopped', worker_name)
+    _log.info('%s: Stopped', worker_name)
 
 
 def event_worker(worker_name, event_plugin, input_queue, output_queues):
@@ -98,7 +98,7 @@ def event_worker(worker_name, event_plugin, input_queue, output_queues):
         output_queues (list): List of :class:`multiprocessing.Queue`
             objects to write records to.
     """
-    _logger.info('%s: Started', worker_name)
+    _log.info('%s: Started', worker_name)
     while True:
         record = input_queue.get()
         if record is None:
@@ -112,4 +112,4 @@ def event_worker(worker_name, event_plugin, input_queue, output_queues):
             event_record['com']['event_worker'] = worker_name
             for q in output_queues:
                 q.put(event_record)
-    _logger.info('%s: Stopped', worker_name)
+    _log.info('%s: Stopped', worker_name)
