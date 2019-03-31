@@ -158,6 +158,11 @@ class GCPCloud:
         firewalls = self._get_firewalls()
         instances = self._get_instances()
 
+        _log.info('Found %d firewall records for project %s',
+                  len(firewalls), self._project_name)
+        _log.info('Found %d instances for project %s',
+                  len(instances), self._project_name)
+
         for firewall in firewalls:
             record = {
                 'raw': firewall,
