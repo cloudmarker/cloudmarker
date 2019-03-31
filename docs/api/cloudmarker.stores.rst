@@ -25,4 +25,12 @@ cloudmarker.stores.mongodbstore module
     :undoc-members:
     :show-inheritance:
 
+cloudmarker.stores.splunkhecstore module
+----------------------------------------
+
+.. automodule:: cloudmarker.stores.splunkhecstore
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
