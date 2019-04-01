@@ -144,7 +144,7 @@ def _get_doc(iterator, azure_record_type, subscription_id):
                 }
             }
 
-            _log.info('Found document %s #%d; subscription_id: %s; name: %s',
+            _log.info('Found %s #%d; subscription_id: %s; name: %s',
                       azure_record_type, i, subscription_id,
                       doc['raw']['name'])
 
