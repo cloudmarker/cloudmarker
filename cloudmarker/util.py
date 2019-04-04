@@ -159,5 +159,228 @@ def merge_dicts(a, b):
     return c
 
 
+def expand_port_ranges(port_ranges):
+    """Expand ``port_ranges`` to a :obj:`set` of ports.
+
+    Examples:
+        Here is an example usage of this function:
+
+        >>> from cloudmarker import util
+        >>> ports = util.expand_port_ranges(['22', '3389', '8080-8085'])
+        >>> print(ports == {22, 3389, 8080, 8081, 8082, 8083, 8084, 8085})
+        True
+        >>> ports = util.expand_port_ranges(['8080-8084', '8082-8086'])
+        >>> print(ports == {8080, 8081, 8082, 8083, 8084, 8085, 8086})
+        True
+
+        Note that in a port range of the form ``m-n``, both ``m`` and
+        ``n`` are included in the expanded port set. If ``m > n``, we
+        get an empty port set.
+
+        >>> ports = util.expand_port_ranges(['8085-8080'])
+        >>> print(ports == set())
+        True
+
+        If the port range is invalid, :class:`PortRangeError` is raised.
+
+        >>> util.expand_port_ranges(['8080a'])
+        Traceback (most recent call last):
+            ...
+        cloudmarker.util.PortRangeError: Invalid port range: 8080a
+        >>> util.expand_port_ranges(['8080a-8085'])
+        Traceback (most recent call last):
+            ...
+        cloudmarker.util.PortRangeError: Invalid port in port range: 8080a-8085
+
+    Arguments:
+        port_ranges (list): A list of strings where each string is a
+            port number (e.g., ``'80'``) or port range (e.g., ``80-89``).
+
+    Returns:
+        set: A set of integers that represent the ports specified
+            by ``port_ranges``.
+
+    """
+    # The return value is a set of ports, so that every port number
+    # occurs only once even if they are found multiple times in
+    # overlapping port ranges, e.g., ['8080-8084', '8082-8086'].
+    expanded_port_set = set()
+
+    for port_range in port_ranges:
+        # If it's just a port number, e.g., '80', add it to the result set.
+        if port_range.isdigit():
+            expanded_port_set.add(int(port_range))
+            continue
+
+        # Otherwise, it must look like a port range, e.g., '1024-9999'.
+        if '-' not in port_range:
+            raise PortRangeError('Invalid port range: {}'
+                                 .format(port_range))
+
+        # If it looks like a port range, it must be two numbers
+        # with a hyphen between them.
+        start_port, end_port = port_range.split('-', 1)
+        if not start_port.isdigit() or not end_port.isdigit():
+            raise PortRangeError('Invalid port in port range: {}'
+                                 .format(port_range))
+
+        # Add the port numbers in the port range to the result set.
+        expanded_ports = range(int(start_port), int(end_port) + 1)
+        expanded_port_set.update(expanded_ports)
+
+    return expanded_port_set
+
+
+def friendly_string(technical_string):
+    """Translate a technical string to a human-friendly phrase.
+
+    In most of our code, we use succint strings to express various
+    technical details, e.g., ``'gcp'`` to express Google Cloud Platform.
+    However these technical strings are not ideal while writing
+    human-friendly messages such as a description of a security issue
+    detected or a recommendation to remediate such an issue.
+
+    This function helps in converting such technical strings into
+    human-friendly phrases that can be used in strings intended to be
+    read by end users (e.g., security analysts responsible for
+    protecting their cloud infrastructure) of this project.
+
+    Examples:
+        Here are a few example usages of this function:
+
+        >>> from cloudmarker import util
+        >>> util.friendly_string('azure')
+        'Azure'
+        >>> util.friendly_string('gcp')
+        'Google Cloud Platform (GCP)'
+
+    Arguments:
+        technical_string (str): A technical string.
+
+    Returns:
+        str: Human-friendly string if a translation from a technical
+            string to friendly string exists; the same string otherwise.
+
+    """
+    phrase_map = {
+        'azure': 'Azure',
+        'gcp': 'Google Cloud Platform (GCP)'
+    }
+    return phrase_map.get(technical_string, technical_string)
+
+
+def friendly_list(items, conjunction='and'):
+    """Translate a list of items to a human-friendly list of items.
+
+    Examples:
+        Here are a few example usages of this function:
+
+        >>> from cloudmarker import util
+        >>> util.friendly_list([])
+        'none'
+        >>> util.friendly_list(['apple'])
+        'apple'
+        >>> util.friendly_list(['apple', 'ball'])
+        'apple and ball'
+        >>> util.friendly_list(['apple', 'ball', 'cat'])
+        'apple, ball, and cat'
+        >>> util.friendly_list(['apple', 'ball'], 'or')
+        'apple or ball'
+        >>> util.friendly_list(['apple', 'ball', 'cat'], 'or')
+        'apple, ball, or cat'
+
+    Arguments:
+        items (list): List of items.
+
+    Returns:
+        str: Human-friendly list of items with correct placement of
+            comma and conjunction.
+
+    """
+    if not items:
+        return 'none'
+
+    items = [str(item) for item in items]
+
+    if len(items) == 1:
+        return items[0]
+
+    if len(items) == 2:
+        return items[0] + ' ' + conjunction + ' ' + items[1]
+
+    return ', '.join(items[:-1]) + ', ' + conjunction + ' ' + items[-1]
+
+
+def pluralize(count, word, *suffixes):
+    """Convert ``word`` to plural form if ``count`` is not ``1``.
+
+    Examples:
+        In the simplest form usage, this function just adds an ``'s'``
+        to the input word when the plural form needs to be used.
+
+        >>> from cloudmarker import util
+        >>> util.pluralize(0, 'apple')
+        'apples'
+        >>> util.pluralize(1, 'apple')
+        'apple'
+        >>> util.pluralize(2, 'apple')
+        'apples'
+
+        The plural form of some words cannot be formed merely by adding
+        an ``'s'`` to the word but requires adding a different suffix.
+        For such cases, provide an additional argument that specifies
+        the correct suffix.
+
+        >>> util.pluralize(0, 'potato', 'es')
+        'potatoes'
+        >>> util.pluralize(1, 'potato', 'es')
+        'potato'
+        >>> util.pluralize(2, 'potato', 'es')
+        'potatoes'
+
+        The plural form of some words cannot be formed merely by adding
+        a suffix but requires removing a suffix and then adding a new
+        suffix. For such cases, provide two additional arguments: one
+        that specifies the suffix to remove from the input word and
+        another to specify the suffix to add.
+
+        >>> util.pluralize(0, 'sky', 'y', 'ies')
+        'skies'
+        >>> util.pluralize(1, 'sky', 'y', 'ies')
+        'sky'
+        >>> util.pluralize(2, 'sky', 'y', 'ies')
+        'skies'
+
+    Returns:
+        str: The input ``word`` itself if ``count`` is ``1``; plural
+            form of the ``word`` otherwise.
+
+    """
+    if not suffixes:
+        remove, append = '', 's'
+    elif len(suffixes) == 1:
+        remove, append = '', suffixes[0]
+    elif len(suffixes) == 2:
+        remove, append = suffixes[0], suffixes[1]
+    else:
+        raise PluralizeError('Surplus argument: {!r}'.format(suffixes[2]))
+
+    if count == 1:
+        return word
+
+    if remove != '' and word.endswith(remove):
+        word = word[:-len(remove)]
+    word = word.rstrip(remove)
+    return word + append
+
+
 class PluginError(Exception):
     """Represents an error while loading a plugin."""
+
+
+class PortRangeError(Exception):
+    """Represents an error in parsing a port range."""
+
+
+class PluralizeError(Exception):
+    """Represents an error while converting a word to plural form."""

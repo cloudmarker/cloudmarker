@@ -110,3 +110,119 @@ class UtilTest(unittest.TestCase):
         c['a'].append(7)
         self.assertEqual(a, {'a': [1, 2, 3]})
         self.assertEqual(b, {'a': [4, 5, 6]})
+
+    def test_expand_port_ranges_empty_list(self):
+        ports = util.expand_port_ranges([])
+        self.assertEqual(ports, set())
+
+    def test_expand_port_ranges_single_port(self):
+        ports = util.expand_port_ranges(['80'])
+        self.assertEqual(ports, {80})
+
+    def test_expand_port_ranges_duplicate_ports(self):
+        ports = util.expand_port_ranges(['80', '80'])
+        self.assertEqual(ports, {80, 80})
+
+    def test_expand_port_ranges_duplicate_port_numbers(self):
+        ports = util.expand_port_ranges(['80', '80'])
+        self.assertEqual(ports, {80, 80})
+
+    def test_expand_port_ranges_single_range(self):
+        ports = util.expand_port_ranges(['80-89'])
+        self.assertEqual(ports, set(range(80, 90)))
+
+    def test_expand_port_ranges_overlapping_ranges(self):
+        ports = util.expand_port_ranges(['80-89', '85-99'])
+        self.assertEqual(ports, set(range(80, 100)))
+
+    def test_expand_port_ranges_all(self):
+        ports = util.expand_port_ranges(['0-65535'])
+        self.assertEqual(ports, set(range(0, 65536)))
+
+    def test_expand_port_ranges_empty_range(self):
+        ports = util.expand_port_ranges(['81-80'])
+        self.assertEqual(ports, set())
+
+    def test_expand_port_ranges_single_port_range(self):
+        ports = util.expand_port_ranges(['80-80'])
+        self.assertEqual(ports, {80})
+
+    def test_expand_port_ranges_invalid_port_range(self):
+        with self.assertRaises(util.PortRangeError):
+            util.expand_port_ranges(['8080a'])
+
+    def test_expand_port_ranges_invalid_port_in_port_range(self):
+        with self.assertRaises(util.PortRangeError):
+            util.expand_port_ranges(['8080a-8089'])
+
+    def test_friendly_string_present(self):
+        s = util.friendly_string('azure')
+        self.assertEqual(s, 'Azure')
+
+    def test_friendly_string_missing(self):
+        s = util.friendly_string('foo')
+        self.assertEqual(s, 'foo')
+
+    def test_friendly_list_zero_items(self):
+        s = util.friendly_list([])
+        self.assertEqual(s, 'none')
+
+    def test_friendly_list_one_item(self):
+        s = util.friendly_list(['apple'])
+        self.assertEqual(s, 'apple')
+
+    def test_friendly_list_two_items(self):
+        s = util.friendly_list(['apple', 'ball'])
+        self.assertEqual(s, 'apple and ball')
+
+    def test_friendly_list_three_items(self):
+        s = util.friendly_list(['apple', 'ball', 'cat'])
+        self.assertEqual(s, 'apple, ball, and cat')
+
+    def test_friendly_list_two_items_conjunction(self):
+        s = util.friendly_list(['apple', 'ball'], 'or')
+        self.assertEqual(s, 'apple or ball')
+
+    def test_friendly_list_three_items_conjunction(self):
+        s = util.friendly_list(['apple', 'ball', 'cat'], 'or')
+        self.assertEqual(s, 'apple, ball, or cat')
+
+    def test_pluralize_zero(self):
+        s = util.pluralize(0, 'apple')
+        self.assertEqual(s, 'apples')
+
+    def test_pluralize_one(self):
+        s = util.pluralize(1, 'apple')
+        self.assertEqual(s, 'apple')
+
+    def test_pluralize_two(self):
+        s = util.pluralize(2, 'apple')
+        self.assertEqual(s, 'apples')
+
+    def test_pluralize_zero_suffix(self):
+        s = util.pluralize(0, 'potato', 'es')
+        self.assertEqual(s, 'potatoes')
+
+    def test_pluralize_one_suffix(self):
+        s = util.pluralize(1, 'potato', 'es')
+        self.assertEqual(s, 'potato')
+
+    def test_pluralize_two_suffix(self):
+        s = util.pluralize(2, 'potato', 'es')
+        self.assertEqual(s, 'potatoes')
+
+    def test_pluralize_zero_suffixes(self):
+        s = util.pluralize(0, 'sky', 'y', 'ies')
+        self.assertEqual(s, 'skies')
+
+    def test_pluralize_one_suffixes(self):
+        s = util.pluralize(1, 'sky', 'y', 'ies')
+        self.assertEqual(s, 'sky')
+
+    def test_pluralize_two_suffixes(self):
+        s = util.pluralize(2, 'sky', 'y', 'ies')
+        self.assertEqual(s, 'skies')
+
+    def test_pluralize_two_surplus_suffix(self):
+        with self.assertRaises(util.PluralizeError):
+            util.pluralize(2, 'sky', 'y', 'ies', 'foo')

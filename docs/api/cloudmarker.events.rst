@@ -17,6 +17,14 @@ cloudmarker.events.firewallevent module
     :undoc-members:
     :show-inheritance:
 
+cloudmarker.events.firewallruleevent module
+-------------------------------------------
+
+.. automodule:: cloudmarker.events.firewallruleevent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.events.mockevent module
 -----------------------------------
 
