@@ -6,6 +6,7 @@ Google Cloud Platform.
 
 
 import json
+import logging
 
 from google.oauth2 import service_account
 from googleapiclient import discovery
@@ -15,6 +16,9 @@ _GCP_SCOPES = ['https://www.googleapis.com/auth/compute.readonly']
 
 See https://developers.google.com/identity/protocols/googlescopes for
 more details on OAuth 2.0 scopes for Google APIs."""
+
+
+_log = logging.getLogger(__name__)
 
 
 class GCPCloud:
@@ -71,7 +75,7 @@ class GCPCloud:
                                credentials=self._credentials,
                                cache_discovery=False)
 
-    def _get_firewall_rules(self):
+    def _get_firewalls(self):
         """Query the compute resource and return firewall rules.
 
         Returns:
@@ -150,61 +154,23 @@ class GCPCloud:
         Yields:
             dict: Firewall rule or VM instance configuration data.
 
-        Here is an example of a firewall rule record :obj:`dict` yielded
-        by this method:
-
-        .. code:: python
-
-            {
-              "kind": "compute#firewall",
-              "id": "7890789078907890",
-              "creationTimestamp": "2018-12-19T01:43:51.988-08:00",
-              "name": "default-allow-ss",
-              "description": "str",
-              "network": "https://www.googleapis.com/compute/v1/"
-                         "projects/foo/global/networks/default",
-              "priority": 1000,
-              "sourceRanges": [
-                "0.0.0.0/0"
-              ],
-              "targetTags": [
-                "https-server"
-              ],
-              "allowed": [
-                {
-                  "IPProtocol": "tcp",
-                  "ports": [
-                    "80",
-                    "8080-8090"
-                  ]
-                }
-              ],
-              "direction": "INGRESS",
-              "logConfig": {
-                "enable": bool
-              },
-              "disabled": bool,
-              "selfLink": "https://www.googleapis.com/compute/v1/"
-                          "projects/foo/global/firewalls/default-allow-https",
-              "record_type": "firewall_rule"
-            }
-
         """
-        firewall_rules = self._get_firewall_rules()
+        firewalls = self._get_firewalls()
         instances = self._get_instances()
 
-        for rule in firewall_rules:
+        for firewall in firewalls:
             record = {
-                'raw': rule,
+                'raw': firewall,
                 'ext': {
-                    'record_type': 'firewall_rule'
+                    'record_type': 'firewall'
                 },
                 'com': {
                     'cloud_type': 'gcp',
-                    'record_type': 'firewall_rule'
+                    'record_type': None,
                 }
             }
             yield record
+            yield from _get_normalized_firewall_rules(firewall)
 
         for instance in instances:
             record = {
@@ -226,3 +192,117 @@ class GCPCloud:
         up tasks associated with the :class:`GCPCloud` plugin. This
         may change in future.
         """
+
+
+def _get_normalized_firewall_rules(firewall):
+    """Split a firewall record into multiple firewall rules.
+
+    A firewall record in GCP has a top-level key named either
+    ``allowed`` or ``denied``. The value of this key is a list of
+    allowed or denied rules. Each such rule contains the name of allowed
+    or denied protocol along with a list of allowed or denied port
+    ranges.
+
+    In order to make it easier to write event plugins to detect security
+    issues in firewall, we generate a new firewall rule record for each
+    allowed or denied rule we find in the value of ``allowed`` or
+    ``denied`` keys in a firewall record.
+
+    Arguments:
+        firewall (dict): Raw firewall record retrieved from GCP.
+
+    Yield:
+        dict: A normalized firewall rule record with ``com`` bucket
+            populated with firewall rule properties in common notation.
+
+    """
+    allow_rules = firewall.get('allowed')
+    if allow_rules is not None:
+        for rule in allow_rules:
+            firewall_rule = _get_normalized_firewall_rule(firewall, rule)
+            firewall_rule['com']['access'] = 'allow'
+            yield firewall_rule
+
+    deny_rules = firewall.get('denied')
+    if deny_rules is not None:
+        for rule in deny_rules:
+            firewall_rule = _get_normalized_firewall_rule(firewall, rule)
+            firewall_rule['com']['access'] = 'deny'
+            yield firewall_rule
+
+
+def _get_normalized_firewall_rule(firewall, rule):
+    """Create a normalized firewall rule record.
+
+    Arguments:
+        firewall (dict): Raw firewall record retrieved from GCP.
+        rule (dict): Raw allowed or denied rule in ``firewall``.
+
+    Returns:
+        dict: A normalized firewall rule record with ``com`` bucket
+            populated with firewall rule properties in common notation.
+
+    """
+    record = {
+        'raw': rule,
+        'ext': {
+            'cloud_type': 'gcp',
+            'record_type': 'firewall_rule',
+            'firewall_id': firewall.get('id'),
+            'firewall_link': firewall.get('selfLink'),
+        },
+        'com': {
+            'cloud_type': 'gcp',
+            'record_type': 'firewall_rule',
+            'reference': firewall.get('selfLink'),
+
+            'enabled': not firewall.get('disabled'),
+
+            'direction':
+                _get_normalized_firewall_direction(firewall),
+
+            'source_addresses': firewall.get('sourceRanges'),
+
+            'protocol':
+                _get_normalized_firewall_protocol(rule),
+
+            # If the 'ports' key is missing in an allowed/denied rule,
+            # it means all ports are allowed/denied.
+            'destination_ports': rule.get('ports', ['0-65535'])
+        }
+    }
+    return record
+
+
+def _get_normalized_firewall_direction(firewall):
+    rule_name = firewall.get('name')
+    direction = firewall.get('direction')
+
+    if direction is None:
+        _log.warning('Found firewall rule without direction; name: %s',
+                     rule_name)
+        return None
+
+    direction = direction.lower()
+
+    if direction == 'ingress':
+        return 'in'
+
+    if direction == 'egress':
+        return 'out'
+
+    _log.warning('Found unknown direction in firewall rule; '
+                 'direction: %s; name: %s', direction, rule_name)
+    return direction
+
+
+def _get_normalized_firewall_protocol(firewall_rule):
+    rule_name = firewall_rule.get('name')
+    protocol = firewall_rule.get('IPProtocol')
+
+    if protocol is None:
+        _log.warning('Found firewall rule without IPProtocol; name: %s',
+                     rule_name)
+        return None
+
+    return protocol.lower()
