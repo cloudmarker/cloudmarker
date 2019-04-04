@@ -44,10 +44,10 @@ class AzureCloud:
         self._max_subs = _max_subs
 
     def read(self):
-        """Return an Azure cloud infrastructure configuration document.
+        """Return an Azure cloud infrastructure configuration record.
 
         Yields:
-            dict: A document of the type ``record_type``.
+            dict: An Azure cloud infrastructure configuration record.
 
         """
         # pylint: disable=R0914
@@ -79,20 +79,20 @@ class AzureCloud:
             resource_list = resource_client.resources.list()
 
             # Retrieve data using each iterator.
-            for doc in itertools.chain(
-                    _get_doc(vm_list, 'virtual_machine', subscription_id),
-                    _get_doc(app_gw_list, 'app_gateway', subscription_id),
-                    _get_doc(lb_iter, 'lb', subscription_id),
-                    _get_doc(nic_list, 'nic', subscription_id),
-                    _get_doc(nsg_list, 'nsg', subscription_id),
-                    _get_doc(pubip_list, 'public_ip', subscription_id),
-                    _get_doc(storage_account_list, 'storage_account',
-                             subscription_id),
-                    _get_doc(resource_group_list, 'resource_group',
-                             subscription_id),
-                    _get_doc(resource_list, 'resource', subscription_id),
+            for record in itertools.chain(
+                    _get_record(vm_list, 'virtual_machine', subscription_id),
+                    _get_record(app_gw_list, 'app_gateway', subscription_id),
+                    _get_record(lb_iter, 'lb', subscription_id),
+                    _get_record(nic_list, 'nic', subscription_id),
+                    _get_record(nsg_list, 'nsg', subscription_id),
+                    _get_record(pubip_list, 'public_ip', subscription_id),
+                    _get_record(storage_account_list, 'storage_account',
+                                subscription_id),
+                    _get_record(resource_group_list, 'resource_group',
+                                subscription_id),
+                    _get_record(resource_list, 'resource', subscription_id),
             ):
-                yield doc
+                yield record
 
             # Break after pulling data for self._max_subs number of
             # subscriptions. Note that if self._max_subs is 0 or less,
@@ -111,17 +111,17 @@ class AzureCloud:
         """
 
 
-def _get_doc(iterator, azure_record_type, subscription_id):
+def _get_record(iterator, azure_record_type, subscription_id):
     """Process a list of :class:`msrest.serialization.Model` objects.
 
     Arguments:
         iterator: An iterator like instance of
             :class:`msrest.serialization.Model` objects.
-        azure_record_type (str): Type of document as per Azure vocabulary.
+        azure_record_type (str): Type of record as per Azure vocabulary.
         subscription_id (str): Subscription ID.
 
     Yields:
-        dict: A document of type ``record_type``.
+        dict: An Azure record of type ``record_type``.
 
     """
     # Dictionary to map Azure record types to common record types.
@@ -131,9 +131,9 @@ def _get_doc(iterator, azure_record_type, subscription_id):
 
     try:
         for i, v in enumerate(iterator):
-            raw_doc = v.as_dict()
-            doc = {
-                'raw': raw_doc,
+            raw_record = v.as_dict()
+            record = {
+                'raw': raw_record,
                 'ext': {
                     'cloud_type': 'azure',
                     'record_type': azure_record_type,
@@ -147,16 +147,16 @@ def _get_doc(iterator, azure_record_type, subscription_id):
 
             _log.info('Found %s #%d; subscription_id: %s; name: %s',
                       azure_record_type, i, subscription_id,
-                      doc['raw'].get('name'))
+                      record['raw'].get('name'))
 
-            yield doc
+            yield record
 
             # For every security rule found in an NSG, generate a
             # separate security rule (firewall rule) record to maintain
             # parity with separate records for separate firewall rules
             # in GCP.
             if azure_record_type == 'nsg':
-                yield from _get_normalized_firewall_rules(raw_doc,
+                yield from _get_normalized_firewall_rules(raw_record,
                                                           subscription_id)
 
     except CloudError as e:
@@ -165,7 +165,7 @@ def _get_doc(iterator, azure_record_type, subscription_id):
                    azure_record_type, subscription_id, type(e).__name__, e)
 
 
-def _get_normalized_firewall_rules(nsg_doc, subscription_id):
+def _get_normalized_firewall_rules(nsg_record, subscription_id):
     """Split a network security group (NSG) into multiple firewall rules.
 
     An Azure NSG record contains a top-level key named
@@ -176,7 +176,7 @@ def _get_normalized_firewall_rules(nsg_doc, subscription_id):
     security rule found in the NSG.
 
     Arguments:
-        nsg_doc (dict): Raw NSG record as retrieved from Azure.
+        nsg_record (dict): Raw NSG record as retrieved from Azure.
         subscription_id (str): Subscription ID (for logging purpose only).
 
     Yields:
@@ -184,8 +184,8 @@ def _get_normalized_firewall_rules(nsg_doc, subscription_id):
             populated with firewall rule properties in common notation.
 
     """
-    security_rules = nsg_doc.get('security_rules')
-    nsg_name = nsg_doc.get('name')
+    security_rules = nsg_record.get('security_rules')
+    nsg_name = nsg_record.get('name')
 
     if security_rules is None:
         _log.warning('Found NSG without security_rules; name: %s', nsg_name)
@@ -197,7 +197,7 @@ def _get_normalized_firewall_rules(nsg_doc, subscription_id):
             'ext': {
                 'record_type': 'security_rule',
                 'subscription_id': subscription_id,
-                'nsg_id': nsg_doc.get('id'),
+                'nsg_id': nsg_record.get('id'),
                 'security_rule_id': security_rule.get('id'),
             },
             'com': {
@@ -224,8 +224,7 @@ def _get_normalized_firewall_rules(nsg_doc, subscription_id):
                     _get_normalized_firewall_destination_ports(security_rule),
             }
         }
-        _log.info('Found document security_rule #%d; '
-                  'subscription_id: %s; name: %s',
+        _log.info('Found security_rule #%d; subscription_id: %s; name: %s',
                   i, subscription_id, security_rule.get('name'))
         yield record
 
