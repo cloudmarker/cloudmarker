@@ -45,7 +45,6 @@ audits:
       - mockevent
     alerts:
       - filestore
-      - emailalert
 
 run:
   - mockaudit
