@@ -9,10 +9,10 @@ cloudmarker.stores package
 Submodules
 ----------
 
-cloudmarker.stores.emailalert module
-------------------------------------
+cloudmarker.stores.esstore module
+---------------------------------
 
-.. automodule:: cloudmarker.stores.emailalert
+.. automodule:: cloudmarker.stores.esstore
     :members:
     :undoc-members:
     :show-inheritance:

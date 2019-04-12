@@ -2,8 +2,9 @@ azure-mgmt-compute
 azure-mgmt-network
 azure-mgmt-resource
 azure-mgmt-storage
-pyyaml
-pymongo
+elasticsearch
 google-api-python-client
+pymongo
+pyyaml
 schedule
 slackclient

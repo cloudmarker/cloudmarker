@@ -3,6 +3,8 @@ clouds:
     plugin: cloudmarker.clouds.mockcloud.MockCloud
 
 stores:
+  esstore:
+    plugin: cloudmarker.stores.esstore.EsStore
   filestore:
     plugin: cloudmarker.stores.filestore.FileStore
   mongodbstore:
