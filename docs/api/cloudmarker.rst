@@ -11,6 +11,7 @@ Subpackages
 
 .. toctree::
 
+    cloudmarker.alerts
     cloudmarker.clouds
     cloudmarker.events
     cloudmarker.stores
