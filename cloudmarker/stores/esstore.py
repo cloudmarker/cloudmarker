@@ -115,4 +115,5 @@ class EsStore:
 
     def done(self):
         """Flush pending records to Elasticsearch."""
-        self._flush()
+        if self._cur_buffer_size:
+            self._flush()
