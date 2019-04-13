@@ -1,17 +1,17 @@
-"""Tests for AzureCloud plugin."""
+"""Tests for AzCloud plugin."""
 
 
 import unittest
 from unittest import mock
 
-from cloudmarker.clouds import azurecloud
+from cloudmarker.clouds import azcloud
 
 
-class AzureCloudTest(unittest.TestCase):
-    """Tests for AzureCloud plugin."""
+class AzCloudTest(unittest.TestCase):
+    """Tests for AzCloud plugin."""
 
     def _patch(self, target):
-        patcher = mock.patch('cloudmarker.clouds.azurecloud.' + target)
+        patcher = mock.patch('cloudmarker.clouds.azcloud.' + target)
         self.addCleanup(patcher.stop)
         return patcher.start()
 
@@ -50,8 +50,8 @@ class AzureCloudTest(unittest.TestCase):
 
         # Note that the 'security_rules' list in the above mock NSG
         # record has only item: an empty dict. This tests the robustness
-        # of AzureCloud plugin when keys are missing from a security
-        # rule dict. AzureCloud plugin should work gracefully even if
+        # of AzCloud plugin when keys are missing from a security
+        # rule dict. AzCloud plugin should work gracefully even if
         # all keys are missing. The only thing we care about is that for
         # every security rule dict in the raw/mock NSG record, a
         # firewall_rule record is generated. This pattern is used in
@@ -60,7 +60,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -76,7 +76,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -92,7 +92,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -108,7 +108,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -124,7 +124,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -142,7 +142,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -160,7 +160,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -176,7 +176,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -192,7 +192,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -208,7 +208,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -224,7 +224,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -240,7 +240,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -256,7 +256,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -272,7 +272,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -290,7 +290,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -308,7 +308,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -326,7 +326,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -355,7 +355,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -372,7 +372,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -388,7 +388,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -404,7 +404,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -420,7 +420,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -438,7 +438,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -458,7 +458,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -488,7 +488,7 @@ class AzureCloudTest(unittest.TestCase):
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
 
-        records = list(azurecloud.AzureCloud('', '', '').read())
+        records = list(azcloud.AzCloud('', '', '').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'

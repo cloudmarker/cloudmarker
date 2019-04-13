@@ -9,10 +9,10 @@ cloudmarker.clouds package
 Submodules
 ----------
 
-cloudmarker.clouds.azurecloud module
-------------------------------------
+cloudmarker.clouds.azcloud module
+---------------------------------
 
-.. automodule:: cloudmarker.clouds.azurecloud
+.. automodule:: cloudmarker.clouds.azcloud
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,6 +1,6 @@
 """Microsoft Azure cloud plugin to read Azure infrastructure data.
 
-This module defines the :class:`AzureCloud` class that retrieves data
+This module defines the :class:`AzCloud` class that retrieves data
 from Microsoft Azure.
 """
 
@@ -18,11 +18,11 @@ from msrestazure.azure_exceptions import CloudError
 _log = logging.getLogger(__name__)
 
 
-class AzureCloud:
+class AzCloud:
     """Azure cloud plugin."""
 
     def __init__(self, tenant, client, secret, _max_subs=0):
-        """Create an instance of :class:`AzureCloud` plugin.
+        """Create an instance of :class:`AzCloud` plugin.
 
         Arguments:
             tenant (str): Azure subscription tenant ID.
@@ -106,7 +106,7 @@ class AzureCloud:
         """Perform clean up tasks.
 
         Currently, this method does nothing because there are no clean
-        up tasks associated with the :class:`AzureCloud` plugin. This
+        up tasks associated with the :class:`AzCloud` plugin. This
         may change in future.
         """
 
