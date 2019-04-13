@@ -30,8 +30,8 @@ def main():
     logging.config.dictConfig(config['logger'])
 
     # Run the audits according to the schedule set in the configuration if the
-    # 'force' flag is not set in the command line.
-    if args.force:
+    # 'now' flag is not set in the command line.
+    if args.now:
         _log.info('Starting job now')
         job(config)
     else:
