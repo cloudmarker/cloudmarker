@@ -8,6 +8,8 @@ import os
 
 import yaml
 
+import cloudmarker
+
 
 def load_config(config_paths):
     """Load configuration from specified configuration paths.
@@ -122,6 +124,8 @@ def parse_cli(args=None):
                         help='run audits with specified configuration files')
     parser.add_argument('-n', '--now', action='store_true',
                         help='ignore configured schedule and run audits now')
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s ' + cloudmarker.__version__)
     args = parser.parse_args(args)
     return args
 
