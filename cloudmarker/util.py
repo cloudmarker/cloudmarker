@@ -119,7 +119,7 @@ def parse_cli(args=None):
     parser = argparse.ArgumentParser(prog='cloudmarker')
     parser.add_argument('-c', '--config', nargs='+',
                         default=['config.base.yaml', 'config.yaml'],
-                        help='Configuration file paths')
+                        help='run audits with specified configuration files')
     parser.add_argument('-n', '--now', action='store_true',
                         help='ignore configured schedule and run audits now')
     args = parser.parse_args(args)
