@@ -25,6 +25,7 @@ deps: FORCE
 
 rmvenv: FORCE
 	rm -rf ~/.venv/cloudmarker
+	rm venv
 
 test: FORCE
 	# Test interactive Python examples in docstrings.
@@ -87,6 +88,7 @@ uservenv: FORCE
 
 rmuservenv: FORCE
 	rm -rf ~/.venv/cloudmarker-user
+	rm uservenv
 
 install:
 	@echo
