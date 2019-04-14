@@ -1,8 +1,16 @@
 .. include:: ../README.rst
 
 
-API Documentation
------------------
+Tutorial
+--------
+
+.. toctree::
+
+   tutorial
+
+
+API
+---
 
 .. toctree::
 

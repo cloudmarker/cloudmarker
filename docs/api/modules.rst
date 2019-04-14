@@ -1,5 +1,5 @@
-cloudmarker
-===========
+Cloudmarker API
+===============
 
 .. toctree::
    :maxdepth: 4

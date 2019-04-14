@@ -47,7 +47,9 @@ pygments_style = None
 # Do not set a theme so that Read the Docs can choose its default one.
 # html_theme = 'alabaster'
 
-html_static_path = ['_static']
+# We do not use static files yet, so comment it out to prevent
+# "html_static_path entry '.../docs/_static' does not exist" warning.
+# html_static_path = ['_static']
 htmlhelp_basename = 'Cloudmarkerdoc'
 
 latex_elements = {}

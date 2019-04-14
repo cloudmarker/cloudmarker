@@ -62,6 +62,9 @@ lint:
 docs: FORCE
 	rm -rf docs/api docs/_build
 	. ./venv && sphinx-apidoc -M -o docs/api cloudmarker cloudmarker/test
+	sed 's/^cloudmarker/Cloudmarker API/; s/^==*/===============/' \
+	    docs/api/modules.rst > modules.tmp
+	mv modules.tmp docs/api/modules.rst
 	. ./venv && cd docs && make html
 	@echo
 	@echo Generated documentation: docs/_build/html/index.html
@@ -86,9 +89,11 @@ dist: clean
 	. ./venv && python3 setup.py sdist bdist_wheel
 
 upload: dist
+	. ./venv && twine check dist/*
 	. ./venv && twine upload dist/*
 
 test-upload: dist
+	. ./venv && twine check dist/*
 	. ./venv && \
 	    twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 

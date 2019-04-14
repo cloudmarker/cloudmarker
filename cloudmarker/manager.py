@@ -136,7 +136,7 @@ class Audit:
         self._alert_queues = []
 
         # Create alert workers and queues.
-        for plugin_key in audit_config['alerts']:
+        for plugin_key in audit_config.get('alerts', []):
             input_queue = mp.Queue()
             args = (
                 audit_key,
@@ -150,7 +150,7 @@ class Audit:
             self._alert_queues.append(input_queue)
 
         # Create event_workers workers and queues.
-        for plugin_key in audit_config['events']:
+        for plugin_key in audit_config.get('events', []):
             input_queue = mp.Queue()
             args = (
                 audit_key,
@@ -165,7 +165,7 @@ class Audit:
             self._event_queues.append(input_queue)
 
         # Create store workers and queues.
-        for plugin_key in audit_config['stores']:
+        for plugin_key in audit_config.get('stores', []):
             input_queue = mp.Queue()
             args = (
                 audit_key,
@@ -179,7 +179,7 @@ class Audit:
             self._store_queues.append(input_queue)
 
         # Create cloud workers.
-        for plugin_key in audit_config['clouds']:
+        for plugin_key in audit_config.get('clouds', []):
             args = (
                 audit_key,
                 audit_version,
