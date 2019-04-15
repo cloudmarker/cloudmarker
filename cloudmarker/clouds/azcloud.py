@@ -21,8 +21,13 @@ _log = logging.getLogger(__name__)
 class AzCloud:
     """Azure cloud plugin."""
 
-    def __init__(self, tenant, client, secret, _max_subs=0):
+    def __init__(self, tenant, client, secret, _max_subs=0, _max_recs=0):
         """Create an instance of :class:`AzCloud` plugin.
+
+         Note: The ``_max_subs`` and ``_max_recs`` arguments should be
+         used only in the development-test-debug phase. They should not
+         be used in production environment. This is why we use the
+         convention of beginning their names with underscore.
 
         Arguments:
             tenant (str): Azure subscription tenant ID.
@@ -30,11 +35,8 @@ class AzCloud:
             secret (str): Azure service principal password.
             _max_subs (int): Maximum number of subscriptions to fetch
                 data for if the value is greater than 0.
-
-                Note: The ``_max_subs`` argument must be used only in
-                the development-test-debug phase. It must not be used
-                in production environment. This is why we use the
-                convention of beginning its name with an underscore.
+            _max_recs (int): Maximum number of records of each type to
+                fetch under each subscription.
         """
         self._credentials = ServicePrincipalCredentials(
             tenant=tenant,
@@ -42,6 +44,7 @@ class AzCloud:
             secret=secret,
         )
         self._max_subs = _max_subs
+        self._max_recs = _max_recs
 
     def read(self):
         """Return an Azure cloud infrastructure configuration record.
@@ -80,17 +83,32 @@ class AzCloud:
 
             # Retrieve data using each iterator.
             for record in itertools.chain(
-                    _get_record(vm_list, 'virtual_machine', subscription_id),
-                    _get_record(app_gw_list, 'app_gateway', subscription_id),
-                    _get_record(lb_iter, 'lb', subscription_id),
-                    _get_record(nic_list, 'nic', subscription_id),
-                    _get_record(nsg_list, 'nsg', subscription_id),
-                    _get_record(pubip_list, 'public_ip', subscription_id),
+                    _get_record(vm_list, 'virtual_machine',
+                                subscription_id, self._max_recs),
+
+                    _get_record(app_gw_list, 'app_gateway',
+                                subscription_id, self._max_recs),
+
+                    _get_record(lb_iter, 'lb',
+                                subscription_id, self._max_recs),
+
+                    _get_record(nic_list, 'nic',
+                                subscription_id, self._max_recs),
+
+                    _get_record(nsg_list, 'nsg',
+                                subscription_id, self._max_recs),
+
+                    _get_record(pubip_list, 'public_ip',
+                                subscription_id, self._max_recs),
+
                     _get_record(storage_account_list, 'storage_account',
-                                subscription_id),
+                                subscription_id, self._max_recs),
+
                     _get_record(resource_group_list, 'resource_group',
-                                subscription_id),
-                    _get_record(resource_list, 'resource', subscription_id),
+                                subscription_id, self._max_recs),
+
+                    _get_record(resource_list, 'resource',
+                                subscription_id, self._max_recs),
             ):
                 yield record
 
@@ -98,8 +116,8 @@ class AzCloud:
             # subscriptions. Note that if self._max_subs is 0 or less,
             # then the following condition never evaluates to True.
             if i + 1 == self._max_subs:
-                _log.info('Exiting read due to _max_subs: %d',
-                          self._max_subs)
+                _log.info('Ending subscriptions fetch due to '
+                          '_max_subs: %d', self._max_subs)
                 break
 
     def done(self):
@@ -111,7 +129,7 @@ class AzCloud:
         """
 
 
-def _get_record(iterator, azure_record_type, subscription_id):
+def _get_record(iterator, azure_record_type, subscription_id, _max_recs):
     """Process a list of :class:`msrest.serialization.Model` objects.
 
     Arguments:
@@ -119,6 +137,7 @@ def _get_record(iterator, azure_record_type, subscription_id):
             :class:`msrest.serialization.Model` objects.
         azure_record_type (str): Type of record as per Azure vocabulary.
         subscription_id (str): Subscription ID.
+        _max_recs (int): Maximum number of records to fetch.
 
     Yields:
         dict: An Azure record of type ``record_type``.
@@ -158,6 +177,13 @@ def _get_record(iterator, azure_record_type, subscription_id):
             if azure_record_type == 'nsg':
                 yield from _get_normalized_firewall_rules(raw_record,
                                                           subscription_id)
+
+            if i + 1 == _max_recs:
+                _log.info('Ending records fetch for subscription due '
+                          'to _max_recs: %d; subscription_id: %s; '
+                          'record_type: %s', _max_recs,
+                          subscription_id, azure_record_type)
+                break
 
     except CloudError as e:
         _log.error('Failed to fetch details for %s; subscription_id: %s; '
