@@ -4,11 +4,16 @@
 import argparse
 import copy
 import importlib
+import logging
 import os
+import textwrap
 
 import yaml
 
 import cloudmarker
+from cloudmarker import baseconfig
+
+_log = logging.getLogger(__name__)
 
 
 def load_config(config_paths):
@@ -21,13 +26,16 @@ def load_config(config_paths):
         dict: A dictionary of configuration key-value pairs.
 
     """
-    config = {}
+    config = baseconfig.config_dict
 
     for config_path in config_paths:
-        if not os.path.exists(config_path):
-            # TODO: Log warning after logging is included.
+        config_path = os.path.expanduser(config_path)
+        _log.info('Looking for %s', config_path)
+
+        if not os.path.isfile(config_path):
             continue
 
+        _log.info('Found %s', config_path)
         with open(config_path) as f:
             new_config = yaml.safe_load(f)
             config = merge_dicts(config, new_config)
@@ -118,16 +126,83 @@ def parse_cli(args=None):
         argparse.Namespace: Parsed command line arguments.
 
     """
-    parser = argparse.ArgumentParser(prog='cloudmarker')
-    parser.add_argument('-c', '--config', nargs='+',
-                        default=['config.base.yaml', 'config.yaml'],
+    default_config_paths = [
+        '/etc/cloudmarker.yaml',
+        '~/.cloudmarker.yaml',
+        '~/cloudmarker.yaml',
+        'cloudmarker.yaml',
+    ]
+
+    description = """
+    Audit clouds as specified by configuration.
+
+    Zero or more config files are specified with the -c/--config option.
+    The config files specified are merged with a built-in base config.
+    Use the -p/--print-base-config option to see the built-in base
+    config. Missing config files are ignored.
+
+    If two or more config files provide conflicting config values, the
+    config file specified later overrides the built-in base config and
+    the config files specified earlier.
+
+    If the -c/--config option is specified without any file arguments
+    following it, then only the built-in base config is used.
+
+    If the -c/--config option is omitted, then the following config
+    files are searched for and merged with the built-in base config: {}.
+    Missing config files are ignored.
+    """
+    description = description.format(friendly_list(default_config_paths))
+    description = wrap_paragraphs(description)
+
+    # We will use this format to preserve formatting of the description
+    # above with the newlines and blank lines intact. The default
+    # formatter line-wraps the entire description after ignoring any
+    # superfluous whitespace including blank lines, so the paragraph
+    # breaks are lost, and the usage description looks ugly.
+    formatter = argparse.RawDescriptionHelpFormatter
+
+    parser = argparse.ArgumentParser(prog='cloudmarker',
+                                     description=description,
+                                     formatter_class=formatter)
+
+    parser.add_argument('-c', '--config', nargs='*',
+                        default=default_config_paths,
                         help='run audits with specified configuration files')
+
     parser.add_argument('-n', '--now', action='store_true',
                         help='ignore configured schedule and run audits now')
+
+    parser.add_argument('-p', '--print-base-config', action='store_true',
+                        help='print base configuration')
+
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s ' + cloudmarker.__version__)
+
     args = parser.parse_args(args)
     return args
+
+
+def wrap_paragraphs(text, width=70):
+    """Wrap each paragraph in ``text`` to the specified ``width``.
+
+    If the ``text`` is indented with any common leading whitespace, then
+    that common leading whitespace is removed from every line in text.
+    Further, any remaining leading and trailing whitespace is removed.
+    Finally, each paragraph is wrapped to the specified ``width``.
+
+    Arguments:
+        width (int): Maximum length of wrapped lines.
+    """
+    # Remove any common leading indentation from all lines.
+    text = textwrap.dedent(text).strip()
+
+    # Split the text into paragraphs.
+    paragraphs = text.split('\n\n')
+
+    # Wrap each paragraph and join them back into a single string.
+    wrapped = '\n\n'.join(textwrap.fill(p, width) for p in paragraphs)
+    return wrapped
 
 
 def merge_dicts(a, b):

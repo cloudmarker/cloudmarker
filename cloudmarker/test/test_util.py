@@ -24,7 +24,11 @@ class UtilTest(unittest.TestCase):
         path2 = os.path.join(data_path, 'config2.yaml')
         path3 = os.path.join(data_path, 'missing.yaml')
         config = util.load_config([path1, path2, path3])
-        self.assertEqual(config, {'foo': 'bar', 'baz': 'qux'})
+        # The resulting config dict is a large dict containing the base
+        # config along with config1.yaml and config2.yaml merged into
+        # it. We test values only in config1.yaml and config2.yaml.
+        self.assertEqual(config['foo'], 'bar')
+        self.assertEqual(config['baz'], 'qux')
 
     def test_load_plugin_syntax_error(self):
         with self.assertRaises(util.PluginError):
@@ -61,7 +65,20 @@ class UtilTest(unittest.TestCase):
 
     def test_parse_cli_args_none(self):
         args = util.parse_cli([])
-        self.assertEqual(args.config, ['config.base.yaml', 'config.yaml'])
+        self.assertEqual(args.config, [
+            '/etc/cloudmarker.yaml',
+            '~/.cloudmarker.yaml',
+            '~/cloudmarker.yaml',
+            'cloudmarker.yaml'
+        ])
+
+    def test_parse_cli_args_no_config(self):
+        # Short option.
+        args = util.parse_cli(['-c'])
+        self.assertEqual(args.config, [])
+        # Long option.
+        args = util.parse_cli(['--config'])
+        self.assertEqual(args.config, [])
 
     def test_parse_cli_args_config(self):
         # Short option.
@@ -70,6 +87,28 @@ class UtilTest(unittest.TestCase):
         # Long option.
         args = util.parse_cli(['--config', 'baz.yaml', 'qux.yaml'])
         self.assertEqual(args.config, ['baz.yaml', 'qux.yaml'])
+
+    def test_wrap_paragraphs_single(self):
+        s = 'Lorem ipsum dolor sit amet.'
+        w = util.wrap_paragraphs(s, 10)
+        self.assertEqual(w, 'Lorem\nipsum\ndolor sit\namet.')
+
+    def test_wrap_paragraphs_multiple(self):
+        s = ('Lorem ipsum dolor sit amet.\n\n'
+             'Quisque tristique auctor suscipit.')
+        w = util.wrap_paragraphs(s, 10)
+        self.assertEqual(w, 'Lorem\nipsum\ndolor sit\namet.\n\n'
+                            'Quisque\ntristique\nauctor\nsuscipit.')
+
+    def test_wrap_paragraphs_dedent(self):
+        s = """
+        Lorem ipsum dolor sit amet.
+
+        Quisque tristique auctor suscipit.
+        """
+        w = util.wrap_paragraphs(s, 10)
+        self.assertEqual(w, 'Lorem\nipsum\ndolor sit\namet.\n\n'
+                            'Quisque\ntristique\nauctor\nsuscipit.')
 
     def test_merge_dicts_simple(self):
         a = {'a': 1, 'b': 2}

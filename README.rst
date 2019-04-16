@@ -35,12 +35,19 @@ Please follow these steps to setup the development environment:
 
     . ./venv
 
-5. In the top-level directory of the project, enter this command: ::
+5. In the top-level directory of the project, enter this command. ::
 
-    python3 -m cloudmarker
+    python3 -m cloudmarker -c -n
 
-   Right now, it generates mock data at ``/tmp/cloudmarker``. More
-   functionality will be added later.
+   The ``-c`` option without any arguments following it ensures that it
+   ignores local configuration files (if any) and runs Cloudmarker with
+   the built-in base configuration only. The built-in base configuration
+   makes it run a mock audit that generates mock data at
+   ``/tmp/cloudmarker``.
+
+   The ``-n`` option ensures that Cloudmarker ignores any schedule
+   configured in the built-in base configuration and runs the mock audit
+   right now.
 
 6. Run the unit tests, code coverage, linters, and document generator: ::
 

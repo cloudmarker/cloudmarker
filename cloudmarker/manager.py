@@ -16,7 +16,8 @@ import time
 
 import schedule
 
-from cloudmarker import util, workers
+import cloudmarker
+from cloudmarker import baseconfig, util, workers
 
 # Define module-level logger.
 _log = logging.getLogger(__name__)
@@ -24,13 +25,28 @@ _log = logging.getLogger(__name__)
 
 def main():
     """Run the framework based on the schedule."""
+    # Configure the logger as the first thing as per the base
+    # configuration. We need this to be the first thing, so that
+    # we can see the messages logged by util.load_config().
+    logging.config.dictConfig(baseconfig.config_dict['logger'])
+    _log.info('Cloudmarker %s', cloudmarker.__version__)
+
+    # Parse the command line arguments and handle the options that can
+    # be handled immediately.
     args = util.parse_cli()
+    if args.print_base_config:
+        print(baseconfig.config_yaml.strip())
+        return
+
+    # Now load user's configuration files.
     config = util.load_config(args.config)
 
+    # Then configure the logger once again to honour any logger
+    # configuration defined in the user's configuration files.
     logging.config.dictConfig(config['logger'])
 
-    # Run the audits according to the schedule set in the configuration if the
-    # 'now' flag is not set in the command line.
+    # Finally, run the audits, either right now or as per a schedule,
+    # depending on the command line options.
     if args.now:
         _log.info('Starting job now')
         job(config)

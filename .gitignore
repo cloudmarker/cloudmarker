@@ -13,7 +13,7 @@ cloudmarker.egg-info/
 dist/
 
 # Ignore local development files.
-config.yaml
+cloudmarker.yaml
 
 # Ignore Vim swap files.
 *.sw?

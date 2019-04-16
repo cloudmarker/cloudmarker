@@ -1,3 +1,37 @@
+"""Base configuration.
+
+Attributes:
+    config_yaml (str): Base configuration as YAML code.
+    config_dict (dict): Base configuration as Python dictionary.
+
+Examples:
+    Here are a few examples that show how the values of these attributes
+    look::
+
+        >>> from cloudmarker import baseconfig
+        >>> print(baseconfig.config_yaml) # doctest: +ELLIPSIS
+        # Base configuration
+        clouds:
+          mockcloud:
+            plugin: cloudmarker.clouds.mockcloud.MockCloud
+        ...
+        >>> baseconfig.config_dict['clouds']
+        {'mockcloud': {'plugin': 'cloudmarker.clouds.mockcloud.MockCloud'}}
+        >>> baseconfig.config_dict['audits'] # doctest: +ELLIPSIS
+        {'mockaudit': {...}}
+        >>> baseconfig.config_dict['audits']['mockaudit']['clouds']
+        ['mockcloud']
+
+    .. Note that it is necessary to put the above example in a
+       reStructuredText literal code block created with the "::" marker
+       so that the doctest directive "# doctest: +ELLIPSIS" does not
+       appear in the rendered documentation.
+
+"""
+
+import yaml
+
+config_yaml = """# Base configuration
 clouds:
   mockcloud:
     plugin: cloudmarker.clouds.mockcloud.MockCloud
@@ -11,31 +45,14 @@ stores:
     plugin: cloudmarker.stores.mongodbstore.MongoDBStore
 
 events:
+  firewallruleevent:
+    plugin: cloudmarker.events.firewallevent.FirewallRuleEvent
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
-  firewallevent:
-    plugin: cloudmarker.evengts.firewallevent.FirewallEvent
 
 alerts:
   filestore:
     plugin: cloudmarker.stores.filestore.FileStore
-  slackalert:
-    plugin: cloudmarker.alerts.slackalert.SlackAlert
-    params:
-      bot_user_token: foo-bot-token
-      to:
-        - foo@example.com
-      text: foo
-  emailalert:
-    plugin: cloudmarker.alerts.emailalert.EmailAlert
-    params:
-      host: smtp.example.com
-      port: 25
-      sender: CloudMarker Alert <no-reply@example.com>
-      to:
-        - recipient@example.com
-      subject: Anomaly notification
-      body: default text
 
 audits:
   mockaudit:
@@ -52,8 +69,8 @@ run:
   - mockaudit
 
 logger:
-
   version: 1
+
   disable_existing_loggers: false
 
   formatters:
@@ -67,6 +84,7 @@ logger:
       level: DEBUG
       formatter: simple
       stream: ext://sys.stdout
+
     file_handler:
       class: logging.handlers.TimedRotatingFileHandler
       level: DEBUG
@@ -86,3 +104,7 @@ logger:
       - file_handler
 
 schedule: "00:00"
+"""
+
+
+config_dict = yaml.safe_load(config_yaml)

@@ -19,6 +19,14 @@ Subpackages
 Submodules
 ----------
 
+cloudmarker.baseconfig module
+-----------------------------
+
+.. automodule:: cloudmarker.baseconfig
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.manager module
 --------------------------
 
