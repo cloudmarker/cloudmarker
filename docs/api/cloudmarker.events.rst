@@ -9,14 +9,6 @@ cloudmarker.events package
 Submodules
 ----------
 
-cloudmarker.events.firewallevent module
----------------------------------------
-
-.. automodule:: cloudmarker.events.firewallevent
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cloudmarker.events.firewallruleevent module
 -------------------------------------------
 
