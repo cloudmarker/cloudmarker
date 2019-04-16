@@ -29,7 +29,7 @@ def load_config(config_paths):
             continue
 
         with open(config_path) as f:
-            new_config = yaml.load(f)
+            new_config = yaml.safe_load(f)
             config = merge_dicts(config, new_config)
 
     return config
