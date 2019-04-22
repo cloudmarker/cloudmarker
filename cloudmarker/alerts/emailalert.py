@@ -12,98 +12,86 @@ _log = logging.getLogger(__name__)
 
 
 class EmailAlert:
-    """A plugin to send email notification for anomalies found."""
+    """A plugin to send email alerts."""
 
-    def __init__(self, host, port, subject, to, sender, body, use_ssl=True,
+    def __init__(self, from_addr, to_addrs,
+                 subject='Cloudmarker Alert',
+                 host='', port=0, use_ssl=True,
                  username=None, password=None):
         """Create an instance of :class:`EmailAlert` plugin.
 
+        When ``use_ssl`` is ``True`` and ``host`` is not specified or
+        specified as ``''``, the local host is used. When ``use_ssl`` is
+        ``True`` and ``port`` is not specified or specified as ``0``,
+        the standard SMTP-over-SSL, i.e., port 465, is used. See
+        :class:`smtplib.SMTP_SSL` documentation for more details on
+        this.
+
+        When ``use_ssl`` is ``False`` and if ``host`` or ``port`` are not
+        specified, i.e., if host or port are ``''`` and/or ``0``
+        respectively, the OS default behavior is used. See
+        :class:`smtplib.SMTP` documentation for more details on this.
+
+        If ``username`` is not specified or specified as ``None``, no
+        SMTP authentication is done. If ``username`` is specified and it
+        is not ``None``, then SMTP authentication is done.
+
         Arguments:
-            host (str): Server hostname for SMTP.
-            port (int): Server port for SMTP.
-            subject (str): Subject line for email.
-            to (list): List of recipients (str).
-            sender (str): From field for email.
-            body (str): Email body.
-            use_ssl (bool): Is SSL connection required
-            username (str): username of email account
-            password (str): password of email account
+            from_addr (str): Sender's email address.
+            to_addrs (list): A list of :obj:`str` objects where each
+                :obj:`str` object is a recipient's email address.
+            host (str): SMTP host.
+            port (int): SMTP port.
+            use_ssl (bool): Use SSL if ``True``, not otherwise.
+            username (str): SMTP username.
+            password (str): SMTP password.
         """
         self._host = host
         self._port = port
         self._subject = subject
-        self._to = to
-        self._sender = sender
-        self._body = body
+        self._from_addr = from_addr
+        self._to_addrs = to_addrs
         self._stringbuffer = []
         self._use_ssl = use_ssl
         self._username = username
         self._password = password
 
     def write(self, record):
-        """Write JSON records to the file system.
-
-        This method is called once for every ``record`` read from a
-        cloud. In this example implementation of a alert, we simply
-        send the ``record`` in JSON format via email to the recipient.
-        The records keeps appending to a stringbuffer which then is
-        written in the email body
+        """Save event record in a buffer.
 
         Arguments:
-            record (dict): Data to send via email.
+            record (dict): An event record.
         """
         for _, value in record.items():
             self._stringbuffer.append(repr(value))
 
     def done(self):
-        """Perform final cleanup tasks.
-
-        This method is called after all records have been written. In
-        this example implementation, we properly terminate the JSON
-        array in the email body.
-
-        The connection is made based whether the SMTP or SMTP_SSL is
-        required which is determined by ``use_ssl`` param. The SMTP
-        login process is conducted if ``username`` param is provided.
-
-        """
+        """Send the buffered events as an email alert."""
         message = MIMEMultipart()
         message['Date'] = email.utils.formatdate(localtime=True)
         message['Subject'] = self._subject
-        message['From'] = self._sender
-        message['To'] = email.utils.COMMASPACE.join(self._to)
+        message['From'] = self._from_addr
+        message['To'] = email.utils.COMMASPACE.join(self._to_addrs)
 
-        # Incase if the buffer is empty then the default message will be sent
-        if self._stringbuffer:
-            self._body = ''.join(self._stringbuffer)
-        message.attach(MIMEText(self._body))
+        body = ''.join(self._stringbuffer)
+        message.attach(MIMEText(body))
 
         smtp = self._prepare_smtp_session()
         try:
-            smtp.sendmail(self._sender, self._to, message.as_string())
+            smtp.sendmail(self._from_addr,
+                          self._to_addrs,
+                          message.as_string())
         except smtplib.SMTPException as e:
             _log.error('Failed to send email: %s', e)
         finally:
             smtp.quit()
 
     def _prepare_smtp_session(self):
-        """Return SMTP connection object.
+        """Start an SMTP session.
 
-        Create a SMTP connection based on whether the SSL param.
-        If SSL connection is required (for eg: in case of gmail) then
-        method will return a SMTP_SSL connection. In other cases if the
-        authentication is not required or SMTP_SSL connection is not
-        required then a plain SMTP connection object is returned.
-        For gmail follow the steps given below even to work for 2 factor
-        authentication
-        1. Log-in into Gmail with your account
-        2. Navigate to https://security.google.com/settings/security/
-        apppasswords
-        3. In 'select app' choose 'custom', give it an arbitrary name and
-        press generate
-        4. It will give you 16 chars token.
-        5. Use that token as password for login
-        6. Host is smtp.gmail.com and port is 465
+        Returns:
+            smtplib.SMTP or smtplib.SMTP_SSL: An SMTP connection
+                with its session ready to send messages.
 
         """
         if self._use_ssl:
