@@ -26,21 +26,21 @@ _log = logging.getLogger(__name__)
 class GCPCloud:
     """GCP cloud plugin."""
 
-    def __init__(self, service_account_key_path, zone):
+    def __init__(self, key_file_path, zone):
         """Create an instance of :class:`GCPCloud` plugin.
 
         Arguments:
-            service_account_key_path (str): Path of the service account
+            key_file_path (str): Path of the service account
                 key file for a project.
             zone (str): Zone of GCP Project, e.g., ``us-east1-b``.
         """
-        self._service_account_key_path = service_account_key_path
+        self._key_file_path = key_file_path
         self._zone = zone
 
         # Service account key file also has the project name under the key
         # project_id. We will use this key file to get the project name for
         # this request.
-        with open(self._service_account_key_path) as f:
+        with open(self._key_file_path) as f:
             self._project_name = json.loads(f.read())['project_id']
 
         # Generating scoped credentials which will be required by the
@@ -48,7 +48,7 @@ class GCPCloud:
         # communicate with the API.
         credentials = service_account.Credentials
         self._credentials = credentials.from_service_account_file(
-            self._service_account_key_path,
+            self._key_file_path,
             scopes=_GCP_SCOPES)
 
         # Currently generating scoped resources with googleapiclient, requires
