@@ -12,6 +12,7 @@ subprocess.
 
 import logging.config
 import multiprocessing as mp
+import textwrap
 import time
 
 import schedule
@@ -64,6 +65,9 @@ def job(config):
     Arguments:
         config (dict): Configuration dictionary.
     """
+    start_time = time.localtime()
+    _send_email(config.get('email'), 'job', start_time)
+
     # Create an audit object for each audit configured to be run.
     audits = []
     for audit_name in config['run']:
@@ -76,6 +80,9 @@ def job(config):
     # Wait for all audits to terminate.
     for audit in audits:
         audit.join()
+
+    end_time = time.localtime()
+    _send_email(config.get('email'), 'job', start_time, end_time)
 
 
 class Audit:
@@ -104,6 +111,9 @@ class Audit:
                 top-level keys named ``clouds``, ``stores``, ``events``,
                 ``alerts``, ``audits``, ``run``, etc.
         """
+        self._start_time = time.localtime()
+        self._audit_name = audit_name
+        self._config = config
         audit_config = config['audits'][audit_name]
 
         # We keep all workers in these lists.
@@ -166,6 +176,7 @@ class Audit:
 
     def start(self):
         """Start audit by starting all workers."""
+        _send_email(self._config.get('email'), 'audit', self._start_time)
         for w in (self._cloud_workers + self._store_workers +
                   self._event_workers + self._alert_workers):
             w.start()
@@ -191,3 +202,53 @@ class Audit:
         # Wait for alert workers to terminate.
         for w in self._alert_workers:
             w.join()
+
+        end_time = time.localtime()
+        _send_email(self._config.get('email'), self._audit_name,
+                    self._start_time, end_time)
+
+
+def _send_email(email_config, about, start_time, end_time=None):
+    """Send email about job or audit that is starting or ending.
+
+    Arguments:
+        email_config (dict): Top-level email configuration dictionary.
+        about (str): A short string that says what the email
+            notification is about, e.g., ``'job'`` or ``'audit'``.
+        start_time (time.struct_time): Start time of job or audit.
+        end_time (time.struct_time): End time of job or audit. This
+            argument must not be specified if the job or audit is
+            starting.
+    """
+    state = 'starting' if end_time is None else 'ending'
+    if email_config is None:
+        _log.info('Skipping email notification because email config is '
+                  'missing; about: %s; state: %s', about, state)
+        return
+
+    _log.info('Sending email; about: %s; state: %s', about, state)
+
+    # This part of the content is common for both starting and
+    # ending states.
+    time_fmt = '%Y-%m-%d %H:%M:%S %z (%Z)'
+    content = """
+    About: {}
+    Started: {}
+    """.format(about, time.strftime(time_fmt, start_time))
+    content = textwrap.dedent(content).lstrip()
+
+    # This part of the content is added only for ending state.
+    if state == 'ending':
+        duration = time.mktime(end_time) - time.mktime(start_time)
+        mm, ss = divmod(duration, 60)
+        hh, mm = divmod(mm, 60)
+
+        end_content = """
+        Ended: {}
+        Duration: {:02.0f} h {:02.0f} m {:02.0f} s
+        """.format(time.strftime(time_fmt, end_time), hh, mm, ss)
+
+        content = content + textwrap.dedent(end_content).lstrip()
+
+    util.send_email(content=content, **email_config)
+    _log.info('Sent email; about: %s; state: %s', about, state)
