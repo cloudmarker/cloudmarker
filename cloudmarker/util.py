@@ -205,21 +205,8 @@ def wrap_paragraphs(text, width=70):
     return wrapped
 
 
-def merge_dicts(a, b):
+def _merge_dicts(a, b):
     """Recursively merge two dictionaries.
-
-    The input dictionaries are not modified. A deepcopy of ``a`` is
-    created and then ``b`` is merged into it.
-
-    Example:
-        Here is an example usage of this function:
-
-        >>> from cloudmarker import util
-        >>> a = {'a': 'apple', 'b': 'ball'}
-        >>> b = {'b': 'bat', 'c': 'cat'}
-        >>> c = util.merge_dicts(a, b)
-        >>> print(c == {'a': 'apple', 'b': 'bat', 'c': 'cat'})
-        True
 
     Arguments:
         a (dict): First dictionary.
@@ -236,6 +223,37 @@ def merge_dicts(a, b):
         else:
             c[k] = copy.deepcopy(b[k])
     return c
+
+
+def merge_dicts(*dicts):
+    """Recursively merge dictionaries.
+
+    The input dictionaries are not modified. Given any
+    number of dicts, deep copy and merge into a new dict,
+    precedence goes to key value pairs in latter dicts.
+
+    Example:
+        Here is an example usage of this function:
+
+        >>> from cloudmarker import util
+        >>> a = {'a': 'apple', 'b': 'ball'}
+        >>> b = {'b': 'bat', 'c': 'cat'}
+        >>> c = util.merge_dicts(a, b)
+        >>> print(c == {'a': 'apple', 'b': 'bat', 'c': 'cat'})
+        True
+
+
+    Arguments:
+        *dicts (dict): Variable length dictionary list
+
+    Returns:
+        dict: Merged dictionary
+
+    """
+    result = {}
+    for dictionary in dicts:
+        result = _merge_dicts(result, dictionary)
+    return result
 
 
 def expand_port_ranges(port_ranges):

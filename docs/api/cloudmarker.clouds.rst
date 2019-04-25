@@ -17,6 +17,14 @@ cloudmarker.clouds.azcloud module
     :undoc-members:
     :show-inheritance:
 
+cloudmarker.clouds.azvm module
+------------------------------
+
+.. automodule:: cloudmarker.clouds.azvm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.clouds.gcpcloud module
 ----------------------------------
 
