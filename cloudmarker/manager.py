@@ -10,6 +10,7 @@ subprocess.
 """
 
 
+import copy
 import logging.config
 import multiprocessing as mp
 import textwrap
@@ -29,7 +30,10 @@ def main():
     # Configure the logger as the first thing as per the base
     # configuration. We need this to be the first thing, so that
     # we can see the messages logged by util.load_config().
-    logging.config.dictConfig(baseconfig.config_dict['logger'])
+    log_config = copy.deepcopy(baseconfig.config_dict['logger'])
+    log_config['handlers'] = {'console': log_config['handlers']['console']}
+    log_config['root']['handlers'] = ['console']
+    logging.config.dictConfig(log_config)
     _log.info('Cloudmarker %s', cloudmarker.__version__)
 
     # Parse the command line arguments and handle the options that can
@@ -45,6 +49,7 @@ def main():
     # Then configure the logger once again to honour any logger
     # configuration defined in the user's configuration files.
     logging.config.dictConfig(config['logger'])
+    _log.info('Cloudmarker %s; configured', cloudmarker.__version__)
 
     # Finally, run the audits, either right now or as per a schedule,
     # depending on the command line options.
