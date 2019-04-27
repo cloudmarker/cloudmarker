@@ -84,7 +84,7 @@ logger:
       formatter: simple
       stream: ext://sys.stdout
 
-    file_handler:
+    file:
       class: logging.handlers.TimedRotatingFileHandler
       formatter: simple
       filename: logs/cloudmarker.log
@@ -99,7 +99,7 @@ logger:
     level: INFO
     handlers:
       - console
-      - file_handler
+      - file
 
 schedule: "00:00"
 """
