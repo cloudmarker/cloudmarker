@@ -81,13 +81,11 @@ logger:
   handlers:
     console:
       class: logging.StreamHandler
-      level: DEBUG
       formatter: simple
       stream: ext://sys.stdout
 
     file_handler:
       class: logging.handlers.TimedRotatingFileHandler
-      level: DEBUG
       formatter: simple
       filename: logs/cloudmarker.log
       when: midnight
