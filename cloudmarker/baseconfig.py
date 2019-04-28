@@ -11,12 +11,14 @@ Examples:
         >>> from cloudmarker import baseconfig
         >>> print(baseconfig.config_yaml) # doctest: +ELLIPSIS
         # Base configuration
-        clouds:
+        plugins:
           mockcloud:
             plugin: cloudmarker.clouds.mockcloud.MockCloud
         ...
-        >>> baseconfig.config_dict['clouds']
-        {'mockcloud': {'plugin': 'cloudmarker.clouds.mockcloud.MockCloud'}}
+        >>> baseconfig.config_dict['plugins']['mockcloud']
+        {'plugin': 'cloudmarker.clouds.mockcloud.MockCloud'}
+        >>> baseconfig.config_dict['plugins']['filestore']
+        {'plugin': 'cloudmarker.stores.filestore.FileStore'}
         >>> baseconfig.config_dict['audits'] # doctest: +ELLIPSIS
         {'mockaudit': {...}}
         >>> baseconfig.config_dict['audits']['mockaudit']['clouds']
@@ -32,27 +34,24 @@ Examples:
 import yaml
 
 config_yaml = """# Base configuration
-clouds:
+plugins:
   mockcloud:
     plugin: cloudmarker.clouds.mockcloud.MockCloud
 
-stores:
-  esstore:
-    plugin: cloudmarker.stores.esstore.EsStore
   filestore:
     plugin: cloudmarker.stores.filestore.FileStore
+
+  esstore:
+    plugin: cloudmarker.stores.esstore.EsStore
+
   mongodbstore:
     plugin: cloudmarker.stores.mongodbstore.MongoDBStore
 
-events:
   firewallruleevent:
-    plugin: cloudmarker.events.firewallevent.FirewallRuleEvent
+    plugin: cloudmarker.events.firewallruleevent.FirewallRuleEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
-
-alerts:
-  filestore:
-    plugin: cloudmarker.stores.filestore.FileStore
 
 audits:
   mockaudit:

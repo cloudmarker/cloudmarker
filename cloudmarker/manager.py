@@ -137,7 +137,7 @@ class Audit:
             input_queue = mp.Queue()
             args = (
                 audit_name + '-' + name,
-                util.load_plugin(config['alerts'][name]),
+                util.load_plugin(config['plugins'][name]),
                 input_queue,
             )
             worker = mp.Process(target=workers.store_worker, args=args)
@@ -149,7 +149,7 @@ class Audit:
             input_queue = mp.Queue()
             args = (
                 audit_name + '-' + name,
-                util.load_plugin(config['events'][name]),
+                util.load_plugin(config['plugins'][name]),
                 input_queue,
                 self._alert_queues,
             )
@@ -162,7 +162,7 @@ class Audit:
             input_queue = mp.Queue()
             args = (
                 audit_name + '-' + name,
-                util.load_plugin(config['stores'][name]),
+                util.load_plugin(config['plugins'][name]),
                 input_queue,
             )
             worker = mp.Process(target=workers.store_worker, args=args)
@@ -173,7 +173,7 @@ class Audit:
         for name in audit_config['clouds']:
             args = (
                 audit_name + '-' + name,
-                util.load_plugin(config['clouds'][name]),
+                util.load_plugin(config['plugins'][name]),
                 self._store_queues + self._event_queues
             )
             worker = mp.Process(target=workers.cloud_worker, args=args)
