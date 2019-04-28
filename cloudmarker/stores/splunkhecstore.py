@@ -11,13 +11,13 @@ _log = logging.getLogger(__name__)
 class SplunkHECStore:
     """SplunkHECStore plugin to index cloud data in Splunk using HEC token."""
 
-    def __init__(self, uri, token, index_name, ca_cert, buffer_size=1000):
+    def __init__(self, uri, token, index, ca_cert, buffer_size=1000):
         """Create an instance of :class:`SplunkHECStore` plugin.
 
         Arguments:
           uri (str): Splunk collector service URI.
           token (str): Splunk HEC token.
-          index_name (str): Splunk HEC token accessible index.
+          index (str): Splunk HEC token accessible index.
           ca_cert (str): Location of cetificate file to verify the identity
             of host in URI, or False to disable verification
           buffer_size (int): Maximum number of records to hold in
@@ -25,7 +25,7 @@ class SplunkHECStore:
         """
         self._uri = uri
         self._token = token
-        self._index = index_name
+        self._index = index
 
         self._ca_cert = ca_cert
         self._buffer_size = buffer_size
