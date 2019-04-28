@@ -43,17 +43,12 @@ class SplunkHECStoreTest(unittest.TestCase):
         splunk_store.write(mock_record)
         splunk_store.done()
 
-        self.assertEqual(mock_session().post.mock_calls, [
-            mock.call(mock.ANY, headers=mock.ANY, data=mock.ANY,
-                      verify=mock.ANY),
+        mock_calls = mock_session().post.mock_calls
 
-            mock.call().json(),
-
-            mock.call(mock.ANY, headers=mock.ANY, data=mock.ANY,
-                      verify=mock.ANY),
-
-            mock.call().json(),
-        ])
+        post_call_signature = mock.call(mock.ANY, headers=mock.ANY,
+                                        data=mock.ANY, verify=mock.ANY)
+        post_call_count = mock_calls.count(post_call_signature)
+        self.assertEqual(post_call_count, 2)
 
     @mock.patch('requests.session')
     def test_post_failure_no_data_loss(self, mock_session):
@@ -68,7 +63,12 @@ class SplunkHECStoreTest(unittest.TestCase):
         splunk_store.write(mock_record)
         splunk_store.done()
 
-        self.assertEqual(len(mock_session().post.mock_calls), 2)
+        mock_calls = mock_session().post.mock_calls
+
+        post_call_signature = mock.call(mock.ANY, headers=mock.ANY,
+                                        data=mock.ANY, verify=mock.ANY)
+        post_call_count = mock_calls.count(post_call_signature)
+        self.assertEqual(post_call_count, 2)
 
     @mock.patch('requests.session')
     def test_post_fail_splunk_unable_to_index(self, mock_session):
@@ -83,7 +83,12 @@ class SplunkHECStoreTest(unittest.TestCase):
         splunk_store.write(mock_record)
         splunk_store.done()
 
-        self.assertEqual(len(mock_session().post.mock_calls), 4)
+        mock_calls = mock_session().post.mock_calls
+
+        post_call_signature = mock.call(mock.ANY, headers=mock.ANY,
+                                        data=mock.ANY, verify=mock.ANY)
+        post_call_count = mock_calls.count(post_call_signature)
+        self.assertEqual(post_call_count, 2)
 
     @mock.patch('requests.session')
     def test_post_fail_splunk_response_non_json(self, mock_session):
