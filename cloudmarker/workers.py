@@ -108,7 +108,7 @@ def event_worker(worker_name, event_plugin, input_queue, output_queues):
         for event_record in event_plugin.eval(record):
             event_record.setdefault('com', {})
             event_record['com']['origin_worker'] = worker_name
-            event_record['com']['origin_type'] = 'alert'
+            event_record['com']['origin_type'] = 'event'
             event_record['com']['event_worker'] = worker_name
             for q in output_queues:
                 q.put(event_record)
