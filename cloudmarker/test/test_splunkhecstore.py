@@ -43,12 +43,10 @@ class SplunkHECStoreTest(unittest.TestCase):
         splunk_store.write(mock_record)
         splunk_store.done()
 
-        mock_calls = mock_session().post.mock_calls
-
-        post_call_signature = mock.call(mock.ANY, headers=mock.ANY,
-                                        data=mock.ANY, verify=mock.ANY)
-        post_call_count = mock_calls.count(post_call_signature)
-        self.assertEqual(post_call_count, 2)
+        mock_session().post.assert_called_once_with(mock.ANY,
+                                                    headers=mock.ANY,
+                                                    data=mock.ANY,
+                                                    verify=mock.ANY)
 
     @mock.patch('requests.session')
     def test_post_failure_no_data_loss(self, mock_session):

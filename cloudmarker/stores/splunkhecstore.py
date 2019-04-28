@@ -60,6 +60,11 @@ class SplunkHECStore:
         """Perform bulk insert of buffered records into Splunk."""
         buffer_len = len(self._buffer)
 
+        if buffer_len == 0:
+            _log.info('No pending records to index; URI: %s; index: %s',
+                      self._uri, self._index)
+            return
+
         _log.info('Indexing %d records; URI: %s; index: %s ...',
                   buffer_len, self._uri, self._index)
 
