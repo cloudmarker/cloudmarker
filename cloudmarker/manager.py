@@ -140,7 +140,7 @@ class Audit:
                 util.load_plugin(config['plugins'][name]),
                 input_queue,
             )
-            worker = mp.Process(target=workers.store_worker, args=args)
+            worker = mp.Process(target=workers.alert_worker, args=args)
             self._alert_workers.append(worker)
             self._alert_queues.append(input_queue)
 

@@ -41,38 +41,6 @@ def cloud_worker(worker_name, cloud_plugin, output_queues):
     _log.info('%s: Stopped', worker_name)
 
 
-def store_worker(worker_name, store_plugin, input_queue):
-    """Worker function for store plugins.
-
-    This function expects the ``store_plugin`` object to implement a
-    ``write`` method that accepts a single record as a parameter and a
-    ``done`` method to perform cleanup work in the end.
-
-    This function gets records from ``input_queue`` and passes each
-    record to the ``write`` method of ``store_plugin``.
-
-    When there are no more records in the ``input_queue``, i.e., once
-    ``None`` is found in the ``input_queue``, this function calls the
-    ``done`` method of the ``store_plugin`` to indicate that record
-    processing is over.
-
-    Arguments:
-        worker_name (str): Display name for the worker.
-        store_plugin (object): Store plugin object.
-        input_queue (multiprocessing.Queue): Queue to read records from.
-    """
-    _log.info('%s: Started', worker_name)
-    while True:
-        record = input_queue.get()
-        if record is None:
-            store_plugin.done()
-            break
-        record.setdefault('com', {})
-        record['com']['store_worker'] = worker_name
-        store_plugin.write(record)
-    _log.info('%s: Stopped', worker_name)
-
-
 def event_worker(worker_name, event_plugin, input_queue, output_queues):
     """Worker function for event plugins.
 
@@ -112,4 +80,63 @@ def event_worker(worker_name, event_plugin, input_queue, output_queues):
             event_record['com']['event_worker'] = worker_name
             for q in output_queues:
                 q.put(event_record)
+    _log.info('%s: Stopped', worker_name)
+
+
+def store_worker(worker_name, store_plugin, input_queue):
+    """Worker function for store plugins.
+
+    This function expects the ``store_plugin`` object to implement a
+    ``write`` method that accepts a single record as a parameter and a
+    ``done`` method to perform cleanup work in the end.
+
+    This function gets records from ``input_queue`` and passes each
+    record to the ``write`` method of ``store_plugin``.
+
+    When there are no more records in the ``input_queue``, i.e., once
+    ``None`` is found in the ``input_queue``, this function calls the
+    ``done`` method of the ``store_plugin`` to indicate that record
+    processing is over.
+
+    Arguments:
+        worker_name (str): Display name for the worker.
+        store_plugin (object): Store plugin object.
+        input_queue (multiprocessing.Queue): Queue to read records from.
+    """
+    _write_worker(worker_name, store_plugin, input_queue, 'store')
+
+
+def alert_worker(worker_name, alert_plugin, input_queue):
+    """Worker function for alert plugins.
+
+    This function behaves like :func:`cloudmarker.workers.store_worker`.
+    See its documentation for details.
+
+    Arguments:
+        worker_name (str): Display name for the worker.
+        alert_plugin (object): Alert plugin object.
+        input_queue (multiprocessing.Queue): Queue to read records from.
+        worker_type (str): Either ``'store'`` or ``'alert'``.
+    """
+    _write_worker(worker_name, alert_plugin, input_queue, 'alert')
+
+
+def _write_worker(worker_name, write_plugin, input_queue, worker_type):
+    """Worker function for store and alert plugins.
+
+    Arguments:
+        worker_name (str): Display name for the worker.
+        write_plugin (object): Store plugin or alert plugin object.
+        input_queue (multiprocessing.Queue): Queue to read records from.
+        worker_type (str): Either ``'store'`` or ``'alert'``.
+    """
+    _log.info('%s: Started', worker_name)
+    while True:
+        record = input_queue.get()
+        if record is None:
+            write_plugin.done()
+            break
+        record.setdefault('com', {})
+        record['com'][worker_type + '_worker'] = worker_name
+        write_plugin.write(record)
     _log.info('%s: Stopped', worker_name)
