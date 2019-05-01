@@ -44,7 +44,7 @@ class FileStore:
             record (dict): Data to write to the file system.
 
         """
-        worker_name = record['com']['origin_worker']
+        worker_name = record.get('com', {}).get('origin_worker', 'no_worker')
 
         tmp_file_path = os.path.join(self._path, worker_name) + '.tmp'
         if worker_name not in self._worker_names:

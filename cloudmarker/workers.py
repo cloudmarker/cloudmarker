@@ -12,131 +12,169 @@ queues necessary to pass records from one plugin class to another.
 
 import logging
 
+from cloudmarker import util
+
 _log = logging.getLogger(__name__)
 
 
-def cloud_worker(worker_name, cloud_plugin, output_queues):
+def cloud_worker(audit_key, audit_version, plugin_key, plugin,
+                 output_queues):
     """Worker function for cloud plugins.
 
-    This function expects the ``cloud_plugin`` object to implement a
-    ``read`` method that yields records. This function calls this
-    ``read`` method to retrieve records and puts each record into each
-    queue in ``output_queues``.
+    This function expects the ``plugin`` object to implement a ``read``
+    method that yields records. This function calls this ``read`` method
+    to retrieve records and puts each record into each queue in
+    ``output_queues``.
 
     Arguments:
-        worker_name (str): Display name for the worker.
-        cloud_plugin (object): Cloud plugin object.
+        audit_key (str): Audit key name in configuration.
+        audit_version (str): Audit version string.
+        plugin_key (str): Plugin key name in configuration.
+        plugin (object): Cloud plugin object.
         output_queues (list): List of :class:`multiprocessing.Queue`
             objects to write records to.
     """
+    worker_name = audit_key + '_' + plugin_key
     _log.info('%s: Started', worker_name)
-    for record in cloud_plugin.read():
-        record.setdefault('com', {})
-        record['com']['origin_worker'] = worker_name
-        record['com']['origin_type'] = 'cloud'
-        record['com']['cloud_worker'] = worker_name
+    for record in plugin.read():
+        record['com'] = util.merge_dicts(record.get('com', {}), {
+            'audit_key': audit_key,
+            'audit_version': audit_version,
+            'origin_key': plugin_key,
+            'origin_class': type(plugin).__name__,
+            'origin_worker': worker_name,
+            'origin_type': 'cloud',
+        })
         for q in output_queues:
             q.put(record)
-    cloud_plugin.done()
+
+    plugin.done()
     _log.info('%s: Stopped', worker_name)
 
 
-def event_worker(worker_name, event_plugin, input_queue, output_queues):
+def event_worker(audit_key, audit_version, plugin_key, plugin,
+                 input_queue, output_queues):
     """Worker function for event plugins.
 
-    This function expects the ``event_plugin`` object to implement a
-    ``eval`` method that accepts a single record as a parameter and
-    yields one or more records, and a ``done`` method to perform cleanup
-    work in the end.
+    This function expects the ``plugin`` object to implement a ``eval``
+    method that accepts a single record as a parameter and yields one or
+    more records, and a ``done`` method to perform cleanup work in the
+    end.
 
     This function gets records from ``input_queue`` and passes each
-    record to the ``eval`` method of ``event_plugin``. Then it puts each
+    record to the ``eval`` method of ``plugin``. Then it puts each
     record yielded by the ``eval`` method into each queue in
     ``output_queues``.
 
     When there are no more records in the ``input_queue``, i.e., once
     ``None`` is found in the ``input_queue``, this function calls the
-    ``done`` method of the ``store_plugin`` to indicate that record
+    ``done`` method of the ``plugin`` to indicate that record
     processing is over.
 
     Arguments:
-        worker_name (str): Display name for the worker.
-        store_plugin (object): Store plugin object.
+        audit_key (str): Audit key name in configuration.
+        audit_version (str): Audit version string.
+        plugin_key (str): Plugin key name in configuration.
+        plugin (object): Store plugin object.
         input_queue (multiprocessing.Queue): Queue to read records from.
         output_queues (list): List of :class:`multiprocessing.Queue`
             objects to write records to.
     """
+    worker_name = audit_key + '_' + plugin_key
     _log.info('%s: Started', worker_name)
     while True:
         record = input_queue.get()
         if record is None:
-            event_plugin.done()
+            plugin.done()
             break
 
-        for event_record in event_plugin.eval(record):
-            event_record.setdefault('com', {})
-            event_record['com']['origin_worker'] = worker_name
-            event_record['com']['origin_type'] = 'event'
-            event_record['com']['event_worker'] = worker_name
+        for event_record in plugin.eval(record):
+            event_record['com'] = \
+                util.merge_dicts(event_record.get('com', {}), {
+                    'audit_key': audit_key,
+                    'audit_version': audit_version,
+                    'origin_key': plugin_key,
+                    'origin_class': type(plugin).__name__,
+                    'origin_worker': worker_name,
+                    'origin_type': 'event',
+                })
             for q in output_queues:
                 q.put(event_record)
     _log.info('%s: Stopped', worker_name)
 
 
-def store_worker(worker_name, store_plugin, input_queue):
+def store_worker(audit_key, audit_version, plugin_key, plugin,
+                 input_queue):
     """Worker function for store plugins.
 
-    This function expects the ``store_plugin`` object to implement a
+    This function expects the ``plugin`` object to implement a
     ``write`` method that accepts a single record as a parameter and a
     ``done`` method to perform cleanup work in the end.
 
     This function gets records from ``input_queue`` and passes each
-    record to the ``write`` method of ``store_plugin``.
+    record to the ``write`` method of ``plugin``.
 
     When there are no more records in the ``input_queue``, i.e., once
     ``None`` is found in the ``input_queue``, this function calls the
-    ``done`` method of the ``store_plugin`` to indicate that record
+    ``done`` method of the ``plugin`` to indicate that record
     processing is over.
 
     Arguments:
-        worker_name (str): Display name for the worker.
-        store_plugin (object): Store plugin object.
+        audit_key (str): Audit key name in configuration.
+        audit_version (str): Audit version string.
+        plugin_key (str): Plugin key name in configuration.
+        plugin (object): Store plugin object.
         input_queue (multiprocessing.Queue): Queue to read records from.
     """
-    _write_worker(worker_name, store_plugin, input_queue, 'store')
+    _write_worker(audit_key, audit_version, plugin_key, plugin,
+                  input_queue, 'store')
 
 
-def alert_worker(worker_name, alert_plugin, input_queue):
+def alert_worker(audit_key, audit_version, plugin_key, plugin,
+                 input_queue):
     """Worker function for alert plugins.
 
     This function behaves like :func:`cloudmarker.workers.store_worker`.
     See its documentation for details.
 
     Arguments:
-        worker_name (str): Display name for the worker.
-        alert_plugin (object): Alert plugin object.
+        audit_key (str): Audit key name in configuration.
+        audit_version (str): Audit version string.
+        plugin_key (str): Plugin key name in configuration.
+        plugin (object): Alert plugin object.
         input_queue (multiprocessing.Queue): Queue to read records from.
-        worker_type (str): Either ``'store'`` or ``'alert'``.
     """
-    _write_worker(worker_name, alert_plugin, input_queue, 'alert')
+    _write_worker(audit_key, audit_version, plugin_key, plugin,
+                  input_queue, 'alert')
 
 
-def _write_worker(worker_name, write_plugin, input_queue, worker_type):
+def _write_worker(audit_key, audit_version, plugin_key, plugin,
+                  input_queue, worker_type):
     """Worker function for store and alert plugins.
 
     Arguments:
-        worker_name (str): Display name for the worker.
-        write_plugin (object): Store plugin or alert plugin object.
+        audit_key (str): Audit key name in configuration
+        audit_version (str): Audit version string.
+        plugin_key (str): Plugin key name in configuration.
+        plugin (object): Store plugin or alert plugin object.
         input_queue (multiprocessing.Queue): Queue to read records from.
         worker_type (str): Either ``'store'`` or ``'alert'``.
     """
+    worker_name = audit_key + '_' + plugin_key
     _log.info('%s: Started', worker_name)
     while True:
         record = input_queue.get()
         if record is None:
-            write_plugin.done()
+            plugin.done()
             break
-        record.setdefault('com', {})
-        record['com'][worker_type + '_worker'] = worker_name
-        write_plugin.write(record)
+
+        record['com'] = util.merge_dicts(record.get('com', {}), {
+            'audit_key': audit_key,
+            'audit_version': audit_version,
+            'target_key': plugin_key,
+            'target_class': type(plugin).__name__,
+            'target_worker': worker_name,
+            'target_type': worker_type,
+        })
+        plugin.write(record)
     _log.info('%s: Stopped', worker_name)
