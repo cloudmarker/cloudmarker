@@ -120,7 +120,9 @@ class FirewallRuleEvent:
             # Preserve the extended properties from the firewall
             # rule record because they provide useful context to
             # locate the firewall rule that led to the event.
-            'ext': record.get('ext', {}),
+            'ext': util.merge_dicts(record.get('ext', {}), {
+                'record_type': 'firewall_rule_event'
+            }),
 
             'com': {
                 'cloud_type': com.get('cloud_type'),
@@ -131,9 +133,6 @@ class FirewallRuleEvent:
                 'recommendation': recommendation,
             }
         }
-
-        # Set the extended record type.
-        event_record['ext']['record_type'] = 'firewall_rule_event'
 
         _log.info('Generating firewall_rule_event; %r', event_record)
         yield event_record

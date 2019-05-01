@@ -118,9 +118,9 @@ class FirewallRuleEventTest(unittest.TestCase):
         events = list(plugin.eval(record))
         self.assertEqual(events[0]['com']['reference'], 'foo_ref')
 
-    def test_ext_properties_intact(self):
+    def test_ext_copied_to_event(self):
         record = copy.deepcopy(base_record)
-        record['ext'] = {'a': 'apple', 'b': 'ball'}
+        record['ext'] = {'a': 'apple', 'b': 'ball', 'record_type': 'foo'}
         plugin = firewallruleevent.FirewallRuleEvent()
         events = list(plugin.eval(record))
         expected_ext = {
@@ -129,3 +129,16 @@ class FirewallRuleEventTest(unittest.TestCase):
             'record_type': 'firewall_rule_event',
         }
         self.assertEqual(events[0]['ext'], expected_ext)
+
+    def test_ext_unaltered_in_original_record(self):
+        record = copy.deepcopy(base_record)
+        record['ext'] = {'a': 'apple', 'b': 'ball', 'record_type': 'foo'}
+        plugin = firewallruleevent.FirewallRuleEvent()
+        expected_ext = {
+            'a': 'apple',
+            'b': 'ball',
+            'record_type': 'foo',
+        }
+        events = list(plugin.eval(record))
+        self.assertEqual(len(events), 1)
+        self.assertEqual(record['ext'], expected_ext)
