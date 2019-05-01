@@ -20,8 +20,8 @@ class MockCloud:
             >>> cloud = mockcloud.MockCloud()
             >>> for record in cloud.read():
             ...     print(record['raw']['data'],
-            ...           record['ext']['type'],
-            ...           record['com']['type'])
+            ...           record['ext']['record_type'],
+            ...           record['com']['record_type'])
             ...
             0 foo mock
             1 bar mock
@@ -83,11 +83,13 @@ class MockCloud:
                 },
 
                 'ext': {
-                    'type': self._record_types[i % n]
+                    'cloud_type': 'mock',
+                    'record_type': self._record_types[i % n]
                 },
 
                 'com': {
-                    'type': 'mock'
+                    'cloud_type': 'mock',
+                    'record_type': 'mock'
                 }
             }
 

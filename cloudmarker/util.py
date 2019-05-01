@@ -78,8 +78,8 @@ def load_plugin(plugin_config):
         <class 'cloudmarker.clouds.mockcloud.MockCloud'>
         >>> for record in plugin.read():
         ...     print(record['raw']['data'],
-        ...           record['ext']['type'],
-        ...           record['com']['type'])
+        ...           record['ext']['record_type'],
+        ...           record['com']['record_type'])
         ...
         0 baz mock
         1 qux mock

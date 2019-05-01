@@ -1,6 +1,9 @@
 """Mock event plugin for testing purpose."""
 
 
+from cloudmarker import util
+
+
 class MockEvent:
     """Mock event plugin for testing purpose."""
 
@@ -42,15 +45,23 @@ class MockEvent:
         """
         # If record data value is a multiple of self._n, generate an
         # event record.
-        if record.get('raw', {}).get('data', 1) % self._n == 0:
+        data = record.get('raw', {}).get('data', 1)
+        description = '{} is a multiple of {}.'.format(data, self._n)
+        recommendation = (
+            'Divide {} by {} and confirm that the remainder is 0.'
+            .format(data, self._n)
+        )
+        if data % self._n == 0:
             yield {
-                'ext': {
+                'ext': util.merge_dicts(record.get('ext', {}), {
                     'record_type': 'mock_event',
+                    'data': data,
                     'n': self._n,
-                    'cloud_record': record
-                },
+                }),
                 'com': {
-                    'record_type': 'mock_event'
+                    'record_type': 'mock_event',
+                    'description': description,
+                    'recommendation': recommendation,
                 }
             }
 
