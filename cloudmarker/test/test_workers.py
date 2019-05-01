@@ -25,7 +25,8 @@ class WorkersTest(unittest.TestCase):
         out_q2 = mp.Queue()
 
         # Invoke the mock plugin with the worker.
-        workers.cloud_worker('foo', plugin, [out_q1, out_q2])
+        workers.cloud_worker('fooaudit', 'fooversion', 'foocloud',
+                             plugin, [out_q1, out_q2])
 
         # Test that the worker invoked the mock plugin's read() method
         # and finally invoked the mock plugin's done() method.
@@ -53,7 +54,32 @@ class WorkersTest(unittest.TestCase):
         in_q.put(None)
 
         # Invoke the mock plugin with the worker.
-        workers.store_worker('foo', plugin, in_q)
+        workers.store_worker('fooaudit', 'fooversion', 'foostore',
+                             plugin, in_q)
+
+        # Test that the worker invoked the mock plugin's write()
+        # method twice (once for each record) and finally invoked the
+        # mock plugin's done() method (for the None input).
+        expected_calls = [mock.call.write(mock.ANY),
+                          mock.call.write(mock.ANY),
+                          mock.call.done()]
+        self.assertEqual(plugin.mock_calls, expected_calls)
+
+    def test_alert_worker(self):
+        # Mock plugin.
+        plugin = mock.Mock()
+
+        # Test input queue for the mock plugin.
+        in_q = mp.Queue()
+
+        # Put two mock records and None in the test input queue.
+        in_q.put({'raw': {'data': 'record1'}})
+        in_q.put({'raw': {'data': 'record2'}})
+        in_q.put(None)
+
+        # Invoke the mock plugin with the worker.
+        workers.alert_worker('fooaudit', 'fooversion', 'fooalert',
+                             plugin, in_q)
 
         # Test that the worker invoked the mock plugin's write()
         # method twice (once for each record) and finally invoked the
@@ -85,7 +111,8 @@ class WorkersTest(unittest.TestCase):
         in_q.put(None)
 
         # Invoke the mock plugin with the worker.
-        workers.event_worker('foo', plugin, in_q, [out_q1, out_q2])
+        workers.event_worker('fooaudit', 'fooversion', 'fooevent',
+                             plugin, in_q, [out_q1, out_q2])
 
         # Test that the worker invoked the mock plugin's eval() method
         # twice (once for each input string record) and finally invoked

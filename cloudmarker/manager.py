@@ -55,28 +55,29 @@ def main():
     # depending on the command line options.
     if args.now:
         _log.info('Starting job now')
-        job(config)
+        _run(config)
     else:
         _log.info('Scheduled to run job everyday at %s', config['schedule'])
-        schedule.every().day.at(config['schedule']).do(job, config)
+        schedule.every().day.at(config['schedule']).do(_run, config)
         while True:
             schedule.run_pending()
             time.sleep(60)
 
 
-def job(config):
+def _run(config):
     """Run the audits.
 
     Arguments:
         config (dict): Configuration dictionary.
     """
     start_time = time.localtime()
-    _send_email(config.get('email'), 'job', start_time)
+    _send_email(config.get('email'), 'run', start_time)
 
     # Create an audit object for each audit configured to be run.
+    audit_version = time.strftime('%Y%m%d%H%M%S', time.gmtime())
     audits = []
-    for audit_name in config['run']:
-        audits.append(Audit(audit_name, config))
+    for audit_key in config['run']:
+        audits.append(Audit(audit_key, audit_version, config))
 
     # Start all audits.
     for audit in audits:
@@ -87,7 +88,7 @@ def job(config):
         audit.join()
 
     end_time = time.localtime()
-    _send_email(config.get('email'), 'job', start_time, end_time)
+    _send_email(config.get('email'), 'run', start_time, end_time)
 
 
 class Audit:
@@ -97,7 +98,7 @@ class Audit:
     input queues for a single audit configuration.
     """
 
-    def __init__(self, audit_name, config):
+    def __init__(self, audit_key, audit_version, config):
         """Create an instance of :class:`Audit` from configuration.
 
         A single audit definition (from a list of audit definitions
@@ -109,17 +110,19 @@ class Audit:
         the audit workflow.
 
         Arguments:
-            audit_name (str): Key name for an audit configuration. This
+            audit_key (str): Key name for an audit configuration. This
                 key is looked for in ``config['audits']``.
+            audit_version (str): Audit version string.
             config (dict): Configuration dictionary. This is the
                 entire configuration dictionary that contains
                 top-level keys named ``clouds``, ``stores``, ``events``,
                 ``alerts``, ``audits``, ``run``, etc.
         """
         self._start_time = time.localtime()
-        self._audit_name = audit_name
+        self._audit_key = audit_key
+        self._audit_version = audit_version
         self._config = config
-        audit_config = config['audits'][audit_name]
+        audit_config = config['audits'][audit_key]
 
         # We keep all workers in these lists.
         self._cloud_workers = []
@@ -133,11 +136,13 @@ class Audit:
         self._alert_queues = []
 
         # Create alert workers and queues.
-        for name in audit_config['alerts']:
+        for plugin_key in audit_config['alerts']:
             input_queue = mp.Queue()
             args = (
-                audit_name + '-' + name,
-                util.load_plugin(config['plugins'][name]),
+                audit_key,
+                audit_version,
+                plugin_key,
+                util.load_plugin(config['plugins'][plugin_key]),
                 input_queue,
             )
             worker = mp.Process(target=workers.alert_worker, args=args)
@@ -145,11 +150,13 @@ class Audit:
             self._alert_queues.append(input_queue)
 
         # Create event_workers workers and queues.
-        for name in audit_config['events']:
+        for plugin_key in audit_config['events']:
             input_queue = mp.Queue()
             args = (
-                audit_name + '-' + name,
-                util.load_plugin(config['plugins'][name]),
+                audit_key,
+                audit_version,
+                plugin_key,
+                util.load_plugin(config['plugins'][plugin_key]),
                 input_queue,
                 self._alert_queues,
             )
@@ -158,11 +165,13 @@ class Audit:
             self._event_queues.append(input_queue)
 
         # Create store workers and queues.
-        for name in audit_config['stores']:
+        for plugin_key in audit_config['stores']:
             input_queue = mp.Queue()
             args = (
-                audit_name + '-' + name,
-                util.load_plugin(config['plugins'][name]),
+                audit_key,
+                audit_version,
+                plugin_key,
+                util.load_plugin(config['plugins'][plugin_key]),
                 input_queue,
             )
             worker = mp.Process(target=workers.store_worker, args=args)
@@ -170,10 +179,12 @@ class Audit:
             self._store_queues.append(input_queue)
 
         # Create cloud workers.
-        for name in audit_config['clouds']:
+        for plugin_key in audit_config['clouds']:
             args = (
-                audit_name + '-' + name,
-                util.load_plugin(config['plugins'][name]),
+                audit_key,
+                audit_version,
+                plugin_key,
+                util.load_plugin(config['plugins'][plugin_key]),
                 self._store_queues + self._event_queues
             )
             worker = mp.Process(target=workers.cloud_worker, args=args)
@@ -182,8 +193,21 @@ class Audit:
     def start(self):
         """Start audit by starting all workers."""
         _send_email(self._config.get('email'), 'audit', self._start_time)
-        for w in (self._cloud_workers + self._store_workers +
-                  self._event_workers + self._alert_workers):
+
+        begin_record = {'com': {'record_type': 'begin_audit'}}
+
+        # Start store and alert workers first before cloud and event
+        # workers. See next comment to know why.
+        for w in self._store_workers + self._alert_workers:
+            w.start()
+
+        # We want to send begin_audit record to store/alert plugins
+        # before any cloud/event workers can send their records to them.
+        for q in self._store_queues + self._alert_queues:
+            q.put(begin_record)
+
+        # Now start the cloud and event workers.
+        for w in self._cloud_workers + self._event_workers:
             w.start()
 
     def join(self):
@@ -192,16 +216,28 @@ class Audit:
         for w in self._cloud_workers:
             w.join()
 
-        # Stop store workers and event workers.
-        for q in self._store_queues + self._event_queues:
+        end_record = {'com': {'record_type': 'end_audit'}}
+
+        # Stop store workers.
+        for q in self._store_queues:
+            q.put(end_record)
             q.put(None)
 
-        # Wait for store workers and event_workers workers to terminate.
-        for w in self._store_workers + self._event_workers:
+        # Stop event workers.
+        for q in self._event_queues:
+            q.put(None)
+
+        # Wait for store workers to terminate.
+        for w in self._store_workers:
+            w.join()
+
+        # Wait for event workers to terminate.
+        for w in self._event_workers:
             w.join()
 
         # Stop alert workers.
         for q in self._alert_queues:
+            q.put(end_record)
             q.put(None)
 
         # Wait for alert workers to terminate.
@@ -209,7 +245,7 @@ class Audit:
             w.join()
 
         end_time = time.localtime()
-        _send_email(self._config.get('email'), self._audit_name,
+        _send_email(self._config.get('email'), self._audit_key,
                     self._start_time, end_time)
 
 
