@@ -280,16 +280,14 @@ def expand_port_ranges(port_ranges):
         >>> print(ports == set())
         True
 
-        If the port range is invalid, :class:`PortRangeError` is raised.
+        If an invalid port range is found, it is ignored.
 
-        >>> util.expand_port_ranges(['8080a'])
-        Traceback (most recent call last):
-            ...
-        cloudmarker.util.PortRangeError: Invalid port range: 8080a
-        >>> util.expand_port_ranges(['8080a-8085'])
-        Traceback (most recent call last):
-            ...
-        cloudmarker.util.PortRangeError: Invalid port in port range: 8080a-8085
+        >>> ports = util.expand_port_ranges(['8080', '8081a', '8082'])
+        >>> print(ports == {8080, 8082})
+        True
+        >>> ports = util.expand_port_ranges(['7070-7075', '8080a-8085'])
+        >>> print(ports == {7070, 7071, 7072, 7073, 7074, 7075})
+        True
 
     Arguments:
         port_ranges (list): A list of strings where each string is a
@@ -313,15 +311,13 @@ def expand_port_ranges(port_ranges):
 
         # Otherwise, it must look like a port range, e.g., '1024-9999'.
         if '-' not in port_range:
-            raise PortRangeError('Invalid port range: {}'
-                                 .format(port_range))
+            continue
 
         # If it looks like a port range, it must be two numbers
         # with a hyphen between them.
         start_port, end_port = port_range.split('-', 1)
         if not start_port.isdigit() or not end_port.isdigit():
-            raise PortRangeError('Invalid port in port range: {}'
-                                 .format(port_range))
+            continue
 
         # Add the port numbers in the port range to the result set.
         expanded_ports = range(int(start_port), int(end_port) + 1)
@@ -587,10 +583,6 @@ def send_email(from_addr, to_addrs, subject, content,
 
 class PluginError(Exception):
     """Represents an error while loading a plugin."""
-
-
-class PortRangeError(Exception):
-    """Represents an error in parsing a port range."""
 
 
 class PluralizeError(Exception):

@@ -187,12 +187,12 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(ports, {80})
 
     def test_expand_port_ranges_invalid_port_range(self):
-        with self.assertRaises(util.PortRangeError):
-            util.expand_port_ranges(['8080a'])
+        ports = util.expand_port_ranges(['8080', '8081a', '8082'])
+        self.assertEqual(ports, {8080, 8082})
 
     def test_expand_port_ranges_invalid_port_in_port_range(self):
-        with self.assertRaises(util.PortRangeError):
-            util.expand_port_ranges(['8080a-8089'])
+        ports = util.expand_port_ranges(['7070-7075', '808a-8085'])
+        self.assertEqual(ports, {7070, 7071, 7072, 7073, 7074, 7075})
 
     def test_friendly_string_present(self):
         s = util.friendly_string('azure')
