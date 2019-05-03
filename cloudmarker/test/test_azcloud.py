@@ -18,30 +18,32 @@ class AzCloudTest(unittest.TestCase):
     def setUp(self):
         self._patch('ServicePrincipalCredentials')
 
+        mock_record = mock.MagicMock()
+
         m = self._patch('SubscriptionClient')
         self._MockSubscriptionClient = m
-        m().subscriptions.list.return_value = [mock.MagicMock()]
+        m().subscriptions.list.return_value = [mock_record]
 
         m = self._patch('ComputeManagementClient')
         self._MockComputeManagementClient = m
-        m().virtual_machines.list_all.return_value = [mock.MagicMock()]
+        m().virtual_machines.list_all.return_value = [mock_record]
 
         m = self._patch('NetworkManagementClient')
         self._MockNetworkManagementClient = m
-        m().application_gateways.list_all.return_value = [mock.MagicMock()]
-        m().load_balancers.list_all.return_value = [mock.MagicMock()]
-        m().network_interfaces.list_all.return_value = [mock.MagicMock()]
-        m().network_security_groups.list_all.return_value = [mock.MagicMock()]
-        m().public_ip_addresses.list_all.return_value = [mock.MagicMock()]
+        m().application_gateways.list_all.return_value = [mock_record]
+        m().load_balancers.list_all.return_value = [mock_record]
+        m().network_interfaces.list_all.return_value = [mock_record]
+        m().network_security_groups.list_all.return_value = [mock_record]
+        m().public_ip_addresses.list_all.return_value = [mock_record]
 
         m = self._patch('StorageManagementClient')
         self._MockStorageManagementClient = m
-        m().storage_accounts.list.return_value = [mock.MagicMock()]
+        m().storage_accounts.list.return_value = [mock_record]
 
         m = self._patch('ResourceManagementClient')
         self._ResourceManagementClient = m
-        m().resource_groups.list.return_value = [mock.MagicMock()]
-        m().resources.list.return_value = [mock.MagicMock()]
+        m().resource_groups.list.return_value = [mock_record]
+        m().resources.list.return_value = [mock_record]
 
     def test_nsg_single_security_rule(self):
         mock_nsg_dict = {'security_rules': [{}]}
