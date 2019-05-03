@@ -355,7 +355,7 @@ def _get_normalized_firewall_destination_ports(security_rule):
     all_ports = []
 
     port = security_rule.get('destination_port_range')
-    if port is not None:
+    if port not in (None, ''):
         all_ports.append(port)
 
     ports = security_rule.get('destination_port_ranges')

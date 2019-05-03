@@ -496,3 +496,61 @@ class AzCloudTest(unittest.TestCase):
 
         self.assertEqual(records[0]['com']['destination_ports'],
                          ['22', '3389', '8000-8080'])
+
+    def test_nsg_destination_port_range_empty(self):
+        mock_nsg_dict = {
+            'security_rules': [
+                {
+                    'destination_port_range': '',
+                }
+            ]
+        }
+
+        # We do not expect both 'destination_port_range' and
+        # 'destination_port_ranges' to be present in the same security
+        # rule but we are making sure here that even if they were to be
+        # present, we are able to handle it in a sensible manner.
+
+        mock_nsg = mock.Mock()
+        mock_nsg.as_dict.return_value = mock_nsg_dict
+
+        m = self._MockNetworkManagementClient
+        m().network_security_groups.list_all.return_value = [mock_nsg]
+
+        records = list(azcloud.AzCloud('', '', '').read())
+        records = [
+            r for r in records
+            if r['com']['record_type'] == 'firewall_rule'
+        ]
+
+        self.assertEqual(records[0]['com']['destination_ports'], [])
+
+    def test_nsg_destination_port_range_empty_and_port_ranges(self):
+        mock_nsg_dict = {
+            'security_rules': [
+                {
+                    'destination_port_range': '',
+                    'destination_port_ranges': ['3389', '8000-8080'],
+                }
+            ]
+        }
+
+        # We do not expect both 'destination_port_range' and
+        # 'destination_port_ranges' to be present in the same security
+        # rule but we are making sure here that even if they were to be
+        # present, we are able to handle it in a sensible manner.
+
+        mock_nsg = mock.Mock()
+        mock_nsg.as_dict.return_value = mock_nsg_dict
+
+        m = self._MockNetworkManagementClient
+        m().network_security_groups.list_all.return_value = [mock_nsg]
+
+        records = list(azcloud.AzCloud('', '', '').read())
+        records = [
+            r for r in records
+            if r['com']['record_type'] == 'firewall_rule'
+        ]
+
+        self.assertEqual(records[0]['com']['destination_ports'],
+                         ['3389', '8000-8080'])
