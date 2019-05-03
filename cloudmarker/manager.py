@@ -71,7 +71,7 @@ def _run(config):
         config (dict): Configuration dictionary.
     """
     start_time = time.localtime()
-    _send_email(config.get('email'), 'run', start_time)
+    _send_email(config.get('email'), 'all audits', start_time)
 
     # Create an audit object for each audit configured to be run.
     audit_version = time.strftime('%Y%m%d%H%M%S', time.gmtime())
@@ -88,7 +88,7 @@ def _run(config):
         audit.join()
 
     end_time = time.localtime()
-    _send_email(config.get('email'), 'run', start_time, end_time)
+    _send_email(config.get('email'), 'all audits', start_time, end_time)
 
 
 class Audit:
@@ -192,7 +192,8 @@ class Audit:
 
     def start(self):
         """Start audit by starting all workers."""
-        _send_email(self._config.get('email'), 'audit', self._start_time)
+        _send_email(self._config.get('email'), self._audit_key,
+                    self._start_time)
 
         begin_record = {'com': {'record_type': 'begin_audit'}}
 
