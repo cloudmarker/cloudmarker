@@ -70,6 +70,19 @@ docs: FORCE
 checks: test coverage lint docs
 
 # Targets to build and upload a new release.
+freeze:
+	pkgs=$$(pip freeze); \
+	while read -r pkg; do \
+	    printf '%s' "$$pkgs" | grep -i "^$${pkg%==*}"; \
+	done < requirements.txt > requirements.tmp
+	mv requirements.tmp requirements.txt
+	cat requirements.txt
+
+unfreeze:
+	sed 's/\(.*\)==.*/\1/' requirements.txt > requirements.tmp
+	mv requirements.tmp requirements.txt
+	cat requirements.txt
+
 dist: clean
 	. ./venv && python3 setup.py sdist bdist_wheel
 
