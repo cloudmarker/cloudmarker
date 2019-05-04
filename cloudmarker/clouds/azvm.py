@@ -112,7 +112,7 @@ def _process_vm_instance_view(vm, vm_iv, subscription_id):
         subscription_id (str): Subscription ID.
 
     Yields:
-        dict: An Azure record of type ``virtual_machine``.
+        dict: An Azure record of type ``vm_instance_view``.
 
     """
     try:
@@ -122,12 +122,12 @@ def _process_vm_instance_view(vm, vm_iv, subscription_id):
             'raw': raw_record,
             'ext': {
                 'cloud_type': 'azure',
-                'record_type': 'virtual_machine',
+                'record_type': 'vm_instance_view',
                 'subscription_id': subscription_id,
             },
             'com': {
                 'cloud_type': 'azure',
-                'record_type': 'compute',
+                'record_type': None,
                 'reference': raw_record.get('id')
             }
         }
