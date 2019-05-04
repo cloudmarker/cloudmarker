@@ -74,7 +74,7 @@ def _run(config):
     _send_email(config.get('email'), 'all audits', start_time)
 
     # Create an audit object for each audit configured to be run.
-    audit_version = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+    audit_version = time.strftime('%Y%m%d_%H%M%S', time.gmtime())
     audits = []
     for audit_key in config['run']:
         audits.append(Audit(audit_key, audit_version, config))
