@@ -74,7 +74,9 @@ logger:
 
   formatters:
     simple:
-      format: "%(asctime)s %(levelname)s %(name)s:%(lineno)d - %(message)s"
+      format: >-
+          %(asctime)s [%(process)s] %(levelname)s
+          %(name)s:%(lineno)d - %(message)s
       datefmt: "%Y-%m-%d %H:%M:%S"
 
   handlers:
@@ -86,9 +88,10 @@ logger:
     file:
       class: logging.handlers.TimedRotatingFileHandler
       formatter: simple
-      filename: logs/cloudmarker.log
+      filename: /tmp/cloudmarker.log
       when: midnight
       encoding: utf8
+      backupCount: 5
 
   loggers:
     adal-python:
