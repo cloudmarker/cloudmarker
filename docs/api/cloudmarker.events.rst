@@ -9,6 +9,14 @@ cloudmarker.events package
 Submodules
 ----------
 
+cloudmarker.events.azvmdatadiskencryptionevent module
+-----------------------------------------------------
+
+.. automodule:: cloudmarker.events.azvmdatadiskencryptionevent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.events.firewallruleevent module
 -------------------------------------------
 

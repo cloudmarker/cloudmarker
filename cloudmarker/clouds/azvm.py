@@ -127,7 +127,7 @@ def _process_vm_instance_view(vm, vm_iv, subscription_id):
             },
             'com': {
                 'cloud_type': 'azure',
-                'record_type': None,
+                'record_type': 'compute',
                 'reference': raw_record.get('id')
             }
         }
