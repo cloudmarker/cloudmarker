@@ -17,6 +17,14 @@ cloudmarker.events.azvmdatadiskencryptionevent module
     :undoc-members:
     :show-inheritance:
 
+cloudmarker.events.azvmosdiskencryptionevent module
+---------------------------------------------------
+
+.. automodule:: cloudmarker.events.azvmosdiskencryptionevent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.events.firewallruleevent module
 -------------------------------------------
 
