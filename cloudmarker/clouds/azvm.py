@@ -65,26 +65,8 @@ class AzVM:
             creds = self._credentials
             compute_client = ComputeManagementClient(creds, subscription_id)
 
-            # Get iterators for virtual machine data.
-            virtual_machines_iter = compute_client.virtual_machines.list_all()
-
-            # Retrieve data using iterator.
-            for vm_index, vm in enumerate(virtual_machines_iter):
-                rg_name = tools.parse_resource_id(vm.id)['resource_group']
-                vm_iv = compute_client.virtual_machines.instance_view(rg_name,
-                                                                      vm.name)
-                yield from _process_vm_instance_view(vm, vm_iv,
-                                                     subscription_id)
-
-                # Break after pulling data for self._max_recs number of
-                # VMs for a subscriber. Note that if self._max_recs is 0 or
-                # less, then the following condition never evaluates to True.
-                if vm_index + 1 == self._max_recs:
-                    _log.info('Exiting pull due to _max_recs: %d for '
-                              'subscriber # %d; sub_id: %s; display_name: %s',
-                              self._max_recs, i, subscription_id,
-                              sub.display_name)
-                    break
+            yield from _get_record(compute_client, subscription_id,
+                                   self._max_recs)
 
             # Break after pulling data for self._max_subs number of
             # subscriptions. Note that if self._max_subs is 0 or less,
@@ -103,7 +85,43 @@ class AzVM:
         """
 
 
-def _process_vm_instance_view(vm, vm_iv, subscription_id):
+def _get_record(compute_client, subscription_id, max_recs):
+    """Get virtual machine records with instance view details.
+
+    Arguments:
+        compute_client (ComputeManagementClient): Compute management client.
+        subscription_id (str): Subscription ID.
+        max_recs (int): Maximum number of records to fetch.
+
+    Yields:
+        dict: An Azure virtual machine record with instance view details.
+
+    """
+    try:
+        virtual_machines_iter = compute_client.virtual_machines.list_all()
+
+        for vm_index, vm in enumerate(virtual_machines_iter):
+            rg_name = tools.parse_resource_id(vm.id)['resource_group']
+            vm_iv = compute_client.virtual_machines.instance_view(rg_name,
+                                                                  vm.name)
+            yield from _process_vm_instance_view(vm, vm_iv,
+                                                 vm_index, subscription_id)
+
+            # Break after pulling data for self._max_recs number of
+            # VMs for a subscriber. Note that if self._max_recs is 0 or
+            # less, then the following condition never evaluates to True.
+            if vm_index + 1 == max_recs:
+                _log.info('Ending records fetch for subscription due '
+                          'to _max_recs: %d; subscription_id: %s; ',
+                          max_recs, subscription_id)
+                break
+    except CloudError as e:
+        _log.error('Failed to fetch details for vm_instance_view; '
+                   'subscription_id: %s; error: %s: %s',
+                   subscription_id, type(e).__name__, e)
+
+
+def _process_vm_instance_view(vm, vm_iv, vm_index, subscription_id):
     """Process virtual machine record and yeild them.
 
     Arguments:
@@ -115,36 +133,29 @@ def _process_vm_instance_view(vm, vm_iv, subscription_id):
         dict: An Azure record of type ``vm_instance_view``.
 
     """
-    try:
-        raw_record = vm.as_dict()
-        raw_record['instance_view'] = vm_iv.as_dict()
-        record = {
-            'raw': raw_record,
-            'ext': {
-                'cloud_type': 'azure',
-                'record_type': 'vm_instance_view',
-                'subscription_id': subscription_id,
-            },
-            'com': {
-                'cloud_type': 'azure',
-                'record_type': 'compute',
-                'reference': raw_record.get('id')
-            }
+    raw_record = vm.as_dict()
+    raw_record['instance_view'] = vm_iv.as_dict()
+    record = {
+        'raw': raw_record,
+        'ext': {
+            'cloud_type': 'azure',
+            'record_type': 'vm_instance_view',
+            'subscription_id': subscription_id,
+        },
+        'com': {
+            'cloud_type': 'azure',
+            'record_type': 'compute',
+            'reference': raw_record.get('id')
         }
-        record['ext'] = util.merge_dicts(
-            record['ext'],
-            _get_normalized_vm_statuses(vm_iv),
-            _get_normalized_vm_disk_encryption_status(vm, vm_iv)
-            )
-        _log.info('Found virtual_machine; subscription_id: %s; name: %s',
-                  subscription_id,
-                  record['raw'].get('name'))
-        yield record
-
-    except CloudError as e:
-        _log.error('Failed to fetch details for virtual_machine; '
-                   'subscription_id: %s; error: %s: %s',
-                   subscription_id, type(e).__name__, e)
+    }
+    record['ext'] = util.merge_dicts(
+        record['ext'],
+        _get_normalized_vm_statuses(vm_iv),
+        _get_normalized_vm_disk_encryption_status(vm, vm_iv)
+        )
+    _log.info('Found vm_instance_view #%d; subscription_id: %s; name: %s',
+              vm_index, subscription_id, record['raw'].get('name'))
+    yield record
 
 
 def _get_normalized_vm_statuses(vm_iv):
