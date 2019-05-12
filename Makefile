@@ -19,7 +19,7 @@ venv: FORCE
 # and modification times.
 deps: FORCE
 	touch venv
-	. ./venv && pip3 install -r requirements.txt
+	. ./venv && pip3 install -r usr-requirements.txt
 	. ./venv && pip3 install -r dev-requirements.txt
 
 rmvenv: FORCE
@@ -72,18 +72,9 @@ docs: FORCE
 checks: test coverage lint docs
 
 # Targets to build and upload a new release.
-freeze:
-	pkgs=$$(pip freeze); \
-	while read -r pkg; do \
-	    printf '%s' "$$pkgs" | grep -i "^$${pkg%==*}"; \
-	done < requirements.txt > requirements.tmp
-	mv requirements.tmp requirements.txt
-	cat requirements.txt
-
-unfreeze:
-	sed 's/\(.*\)==.*/\1/' requirements.txt > requirements.tmp
-	mv requirements.tmp requirements.txt
-	cat requirements.txt
+freeze: rmuservenv uservenv
+	. ./uservenv && pip3 install -r usr-requirements.txt
+	. ./uservenv && pip3 freeze > pkg-requirements.txt
 
 dist: clean
 	. ./venv && python3 setup.py sdist bdist_wheel
@@ -105,19 +96,25 @@ uservenv: FORCE
 
 rmuservenv: FORCE
 	rm -rf ~/.venv/cloudmarker-user
-	rm uservenv
+	rm -f uservenv
 
-install:
+verify-upload: verify-sdist verify-bdist
+
+verify-sdist:
 	@echo
 	@echo Testing source distribution from PyPI ...
 	@echo
 	make smoke-test PIP_OPTS="--no-binary :all:"
+
+verify-bdist:
 	@echo
 	@echo Testing wheel distribution from PyPI ...
 	@echo
 	make smoke-test
 
-test-install:
+verify-test-upload: verify-test-sdist verify-test-bdist
+
+verify-test-sdist:
 	@echo
 	@echo Testing source distribution from Test PyPI ...
 	@echo
@@ -125,6 +122,8 @@ test-install:
 	    --no-binary :all: \
 	    --index-url https://test.pypi.org/simple/ \
 	    --extra-index-url https://pypi.org/simple cloudmarker"
+
+verify-test-bdist:
 	@echo
 	@echo Testing wheel distribution from Test PyPI ...
 	@echo
@@ -133,9 +132,11 @@ test-install:
 	     --extra-index-url https://pypi.org/simple cloudmarker"
 
 smoke-test: rmuservenv uservenv
+	. ./uservenv && pip3 install -U pip
 	. ./uservenv && pip3 install $(PIP_OPTS) --no-cache-dir cloudmarker
 	. ./uservenv && cd /tmp && python3 -m cloudmarker --help
 	. ./uservenv && cd /tmp && cloudmarker --help
+	. ./uservenv && cd /tmp && cloudmarker --config --now
 
 clean: FORCE
 	find . -name "__pycache__" -exec rm -r {} +

@@ -7,7 +7,7 @@ import cloudmarker
 _description = cloudmarker.__doc__.splitlines()[0]
 _long_description = open('README.rst').read()
 _version = cloudmarker.__version__
-_requires = open('requirements.txt').read().splitlines()
+_requires = open('pkg-requirements.txt').read().splitlines()
 
 setuptools.setup(
 

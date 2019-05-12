@@ -1,0 +1,10 @@
+azure-mgmt-compute
+azure-mgmt-network
+azure-mgmt-resource
+azure-mgmt-storage
+elasticsearch
+google-api-python-client
+pymongo
+PyYAML
+schedule
+slackclient==1.3.1
