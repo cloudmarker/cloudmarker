@@ -3,15 +3,23 @@ Cloudmarker
 
 Cloudmarker is a cloud monitoring tool and framework.
 
-.. image:: https://travis-ci.com/cloudmarker/cloudmarker.svg?branch=master
-    :target: https://travis-ci.com/cloudmarker/cloudmarker
+.. image:: https://img.shields.io/badge/view-tutorial-blue.svg
+    :target: https://cloudmarker.readthedocs.io/en/latest/tutorial.html
 
-.. image:: https://coveralls.io/repos/github/cloudmarker/cloudmarker/badge.svg?branch=master
-    :target: https://coveralls.io/github/cloudmarker/cloudmarker?branch=master
+.. image:: https://img.shields.io/pypi/v/cloudmarker.svg
+   :target: https://pypi.org/project/cloudmarker/
 
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://github.com/cloudmarker/cloudmarker/blob/master/LICENSE.rst
 
+.. image:: https://travis-ci.com/cloudmarker/cloudmarker.svg?branch=master
+    :target: https://travis-ci.com/cloudmarker/cloudmarker
+
+.. image:: https://readthedocs.org/projects/cloudmarker/badge/?version=latest
+    :target: https://cloudmarker.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://coveralls.io/repos/github/cloudmarker/cloudmarker/badge.svg?branch=master
+    :target: https://coveralls.io/github/cloudmarker/cloudmarker?branch=master
 
 Contents
 --------
