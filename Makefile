@@ -132,10 +132,11 @@ verify-test-bdist:
 
 smoke-test: rmuservenv uservenv
 	. ./uservenv && pip3 install -U pip
-	. ./uservenv && pip3 install $(PIP_OPTS) --no-cache-dir cloudmarker
+	. ./uservenv && pip3 install $(PIP_OPTS) cloudmarker
 	. ./uservenv && cd /tmp && python3 -m cloudmarker --help
 	. ./uservenv && cd /tmp && cloudmarker --help
 	. ./uservenv && cd /tmp && cloudmarker --config --now
+	. ./uservenv && cd /tmp && cloudmarker --version
 
 clean: FORCE
 	find . -name "__pycache__" -exec rm -r {} +
