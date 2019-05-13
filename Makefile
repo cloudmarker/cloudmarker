@@ -78,13 +78,12 @@ freeze: rmuservenv uservenv
 
 dist: clean
 	. ./venv && python3 setup.py sdist bdist_wheel
+	. ./venv && twine check dist/*
 
 upload: dist
-	. ./venv && twine check dist/*
 	. ./venv && twine upload dist/*
 
 test-upload: dist
-	. ./venv && twine check dist/*
 	. ./venv && \
 	    twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
