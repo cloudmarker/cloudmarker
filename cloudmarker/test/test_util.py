@@ -265,3 +265,13 @@ class UtilTest(unittest.TestCase):
     def test_pluralize_two_surplus_suffix(self):
         with self.assertRaises(util.PluralizeError):
             util.pluralize(2, 'sky', 'y', 'ies', 'foo')
+
+    def test_outline_az_sub(self):
+        sub = {
+            'subscription_id': 'foo_id',
+            'display_name': 'foo_name',
+            'state': 'foo_state',
+        }
+        self.assertEqual(util.outline_az_sub(1, sub, 'foo_tenant'),
+                         'subscription #1: foo_id (foo_name) '
+                         '(foo_state); tenant: foo_tenant')

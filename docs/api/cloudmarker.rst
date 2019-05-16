@@ -27,6 +27,14 @@ cloudmarker.baseconfig module
     :undoc-members:
     :show-inheritance:
 
+cloudmarker.ioworkers module
+----------------------------
+
+.. automodule:: cloudmarker.ioworkers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.manager module
 --------------------------
 

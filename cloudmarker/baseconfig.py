@@ -63,8 +63,8 @@ logger:
   formatters:
     simple:
       format: >-
-          %(asctime)s [%(process)s] %(levelname)s
-          %(name)s:%(lineno)d - %(message)s
+          %(asctime)s [%(process)s] [%(processName)s] [%(threadName)s]
+          %(levelname)s %(name)s:%(lineno)d - %(message)s
       datefmt: "%Y-%m-%d %H:%M:%S"
 
   handlers:

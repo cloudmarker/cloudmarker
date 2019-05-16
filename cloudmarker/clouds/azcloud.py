@@ -5,7 +5,6 @@ from Microsoft Azure.
 """
 
 
-import itertools
 import logging
 
 from azure.common.credentials import ServicePrincipalCredentials
@@ -13,9 +12,8 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
-from msrestazure.azure_exceptions import CloudError
 
-from cloudmarker import util
+from cloudmarker import ioworkers, util
 
 _log = logging.getLogger(__name__)
 
@@ -23,7 +21,8 @@ _log = logging.getLogger(__name__)
 class AzCloud:
     """Azure cloud plugin."""
 
-    def __init__(self, tenant, client, secret, _max_subs=0, _max_recs=0):
+    def __init__(self, tenant, client, secret, processes=4,
+                 threads=30, _max_subs=0, _max_recs=0):
         """Create an instance of :class:`AzCloud` plugin.
 
          Note: The ``_max_subs`` and ``_max_recs`` arguments should be
@@ -35,6 +34,8 @@ class AzCloud:
             tenant (str): Azure subscription tenant ID.
             client (str): Azure service principal application ID.
             secret (str): Azure service principal password.
+            processes (int): Number of processes to launch.
+            threads (int): Number of threads to launch in each process.
             _max_subs (int): Maximum number of subscriptions to fetch
                 data for if the value is greater than 0.
             _max_recs (int): Maximum number of records of each type to
@@ -45,8 +46,13 @@ class AzCloud:
             client_id=client,
             secret=secret,
         )
+        self._tenant = tenant
+        self._processes = processes
+        self._threads = threads
         self._max_subs = _max_subs
         self._max_recs = _max_recs
+        _log.info('Initialized; tenant: %s; processes: %s; threads: %s',
+                  self._tenant, self._processes, self._threads)
 
     def read(self):
         """Return an Azure cloud infrastructure configuration record.
@@ -55,91 +61,161 @@ class AzCloud:
             dict: An Azure cloud infrastructure configuration record.
 
         """
-        # pylint: disable=R0914
+        yield from ioworkers.run(self._get_subscriptions,
+                                 self._get_resources,
+                                 self._processes, self._threads,
+                                 __name__)
 
-        subscription_client = SubscriptionClient(self._credentials)
+    def _get_subscriptions(self):
+        """Generate tuples of record types and subscriptions.
 
-        for i, sub in enumerate(subscription_client.subscriptions.list()):
-            subscription_id = str(sub.subscription_id)
-            _log.info('Found subscription #%d; subscription_id: %s; '
-                      'display_name: %s',
-                      i, subscription_id, sub.display_name)
+        The yielded tuples when unpacked would become arguments for
+        :meth:`_get_resources`. Each such tuple represents a single unit
+        of work that :meth:`_get_resources` can work on independently in
+        its own worker thread.
 
-            # Initialize Azure clients for the current subscription.
-            creds = self._credentials
-            compute_client = ComputeManagementClient(creds, subscription_id)
-            network_client = NetworkManagementClient(creds, subscription_id)
-            storage_client = StorageManagementClient(creds, subscription_id)
-            resource_client = ResourceManagementClient(creds, subscription_id)
+        Yields:
+            tuple: A tuple which when unpacked forms valid arguments for
+                :meth:`_get_resources`.
 
-            # Get iterators for each type of data.
-            vm_list = compute_client.virtual_machines.list_all()
-            app_gw_list = network_client.application_gateways.list_all()
-            lb_iter = network_client.load_balancers.list_all()
-            nic_list = network_client.network_interfaces.list_all()
-            nsg_list = network_client.network_security_groups.list_all()
-            pubip_list = network_client.public_ip_addresses.list_all()
-            storage_account_list = storage_client.storage_accounts.list()
-            resource_group_list = resource_client.resource_groups.list()
-            resource_list = resource_client.resources.list()
+        """
+        try:
+            sub_client = SubscriptionClient(self._credentials)
+            sub_list = sub_client.subscriptions.list()
 
-            # Retrieve data using each iterator.
-            for record in itertools.chain(
-                    _get_record(vm_list, 'virtual_machine',
-                                subscription_id, self._max_recs),
+            record_types = ('virtual_machine', 'app_gateway', 'lb', 'nic',
+                            'nsg', 'public_ip', 'storage_account',
+                            'resource_group')
 
-                    _get_record(app_gw_list, 'app_gateway',
-                                subscription_id, self._max_recs),
+            tenant = self._tenant
+            for sub_index, sub in enumerate(sub_list):
+                sub = sub.as_dict()
+                _log.info('Found %s', util.outline_az_sub(sub_index,
+                                                          sub, tenant))
 
-                    _get_record(lb_iter, 'lb',
-                                subscription_id, self._max_recs),
+                # Each record type for each subscription is a unit of
+                # work that would be fed to _get_resources().
+                for record_type in record_types:
+                    yield (record_type, sub_index, sub)
 
-                    _get_record(nic_list, 'nic',
-                                subscription_id, self._max_recs),
+                # Break after pulling data for self._max_subs number of
+                # subscriptions. Note that if self._max_subs is 0 or less,
+                # then the following condition never evaluates to True.
+                if sub_index + 1 == self._max_subs:
+                    _log.info('Stopping subscriptions fetch due to '
+                              '_max_subs: %d; tenant: %s', self._max_subs,
+                              self._tenant)
+                    break
 
-                    _get_record(nsg_list, 'nsg',
-                                subscription_id, self._max_recs),
+        except Exception as e:
+            _log.error('Failed to fetch subscriptions; %s; error: %s: %s',
+                       util.outline_az_sub(sub_index, sub, tenant),
+                       type(e).__name__, e)
 
-                    _get_record(pubip_list, 'public_ip',
-                                subscription_id, self._max_recs),
+    def _get_resources(self, record_type, sub_index, sub):
+        """Return an Azure cloud infrastructure configuration record.
 
-                    _get_record(storage_account_list, 'storage_account',
-                                subscription_id, self._max_recs),
+        Arguments:
+            record_type (str): Record type name.
+            sub_index (int): Subscription index (for logging only).
+            sub (Subscription): Azure subscription object.
 
-                    _get_record(resource_group_list, 'resource_group',
-                                subscription_id, self._max_recs),
+        Yields:
+            dict: An Azure cloud infrastructure configuration record.
 
-                    _get_record(resource_list, 'resource',
-                                subscription_id, self._max_recs),
-            ):
-                yield record
+        """
+        _log.info('Working on %s list; %s', record_type,
+                  util.outline_az_sub(sub_index, sub, self._tenant))
 
-            # Break after pulling data for self._max_subs number of
-            # subscriptions. Note that if self._max_subs is 0 or less,
-            # then the following condition never evaluates to True.
-            if i + 1 == self._max_subs:
-                _log.info('Ending subscriptions fetch due to '
-                          '_max_subs: %d', self._max_subs)
-                break
+        try:
+            iterator = \
+                _get_resource_iterator(record_type, self._credentials,
+                                       sub_index, sub, self._tenant)
+
+            yield from _get_record(iterator, record_type, self._max_recs,
+                                   sub_index, sub, self._tenant)
+        except Exception as e:
+            _log.error('Failed to fetch details for %s; %s; error: %s: %s',
+                       record_type,
+                       util.outline_az_sub(sub_index, sub, self._tenant),
+                       type(e).__name__, e)
 
     def done(self):
-        """Perform clean up tasks.
-
-        Currently, this method does nothing because there are no clean
-        up tasks associated with the :class:`AzCloud` plugin. This
-        may change in future.
-        """
+        """Log a message that this plugin is done."""
+        _log.info('Done; tenant: %s; processes: %s; threads: %s',
+                  self._tenant, self._processes, self._threads)
 
 
-def _get_record(iterator, azure_record_type, subscription_id, _max_recs):
+def _get_resource_iterator(record_type, credentials,
+                           sub_index, sub, tenant):
+    """Return an appropriate iterator for ``record_type``.
+
+    Arguments:
+        record_type (str): Record type.
+        credentials (ServicePrincipalCredentials): Credentials.
+        sub_index (int): Subscription index (for logging only).
+        sub (Subscription): Subscription object.
+        tenant (str): Tenant ID (for logging only).
+
+    Returns:
+        msrest.paging.Paged: An Azure paging container for iterating
+            over a list of Azure resource objects.
+
+    """
+    sub_id = sub.get('subscription_id')
+
+    if record_type == 'virtual_machine':
+        client = ComputeManagementClient(credentials, sub_id)
+        return client.virtual_machines.list_all()
+
+    if record_type == 'app_gateway':
+        client = NetworkManagementClient(credentials, sub_id)
+        return client.application_gateways.list_all()
+
+    if record_type == 'lb':
+        client = NetworkManagementClient(credentials, sub_id)
+        return client.load_balancers.list_all()
+
+    if record_type == 'nic':
+        client = NetworkManagementClient(credentials, sub_id)
+        return client.network_interfaces.list_all()
+
+    if record_type == 'nsg':
+        client = NetworkManagementClient(credentials, sub_id)
+        return client.network_security_groups.list_all()
+
+    if record_type == 'public_ip':
+        client = NetworkManagementClient(credentials, sub_id)
+        return client.public_ip_addresses.list_all()
+
+    if record_type == 'storage_account':
+        client = StorageManagementClient(credentials, sub_id)
+        return client.storage_accounts.list()
+
+    if record_type == 'resource_group':
+        client = ResourceManagementClient(credentials, sub_id)
+        return client.resource_groups.list()
+
+    # If control reaches here, there is a bug in this plugin. It means
+    # there is a value in record_types variable in _get_subscriptions
+    # that is not handled in the above if-statements.
+    _log.warning('Unrecognized record_type: %s; %s', record_type,
+                 util.outline_az_sub(sub_index, sub, tenant))
+    return None
+
+
+def _get_record(iterator, azure_record_type, max_recs,
+                sub_index, sub, tenant):
     """Process a list of :class:`msrest.serialization.Model` objects.
 
     Arguments:
         iterator: An iterator like instance of
             :class:`msrest.serialization.Model` objects.
         azure_record_type (str): Type of record as per Azure vocabulary.
-        subscription_id (str): Subscription ID.
         _max_recs (int): Maximum number of records to fetch.
+        sub_index (int): Subscription index (for logging only).
+        sub (Subscription): Azure subscription model object.
+        tenant (str): Azure tenant ID (for logging only).
 
     Yields:
         dict: An Azure record of type ``record_type``.
@@ -150,50 +226,45 @@ def _get_record(iterator, azure_record_type, subscription_id, _max_recs):
         'virtual_machine': 'compute',
     }
 
-    try:
-        for i, v in enumerate(iterator):
-            raw_record = v.as_dict()
-            record = {
-                'raw': raw_record,
-                'ext': {
-                    'cloud_type': 'azure',
-                    'record_type': azure_record_type,
-                    'subscription_id': subscription_id,
-                },
-                'com': {
-                    'cloud_type': 'azure',
-                    'record_type': record_type_map.get(azure_record_type)
-                }
+    for i, v in enumerate(iterator):
+        raw_record = v.as_dict()
+        record = {
+            'raw': raw_record,
+            'ext': {
+                'cloud_type': 'azure',
+                'record_type': azure_record_type,
+                'subscription_id': sub.get('subscription_id'),
+                'subscription_name': sub.get('display_name'),
+                'subscription_state': sub.get('state'),
+            },
+            'com': {
+                'cloud_type': 'azure',
+                'record_type': record_type_map.get(azure_record_type)
             }
+        }
 
-            _log.info('Found %s #%d; subscription_id: %s; name: %s',
-                      azure_record_type, i, subscription_id,
-                      record['raw'].get('name'))
+        _log.info('Found %s #%d: %s; %s', azure_record_type, i,
+                  raw_record.get('name'),
+                  util.outline_az_sub(sub_index, sub, tenant))
 
-            yield record
+        yield record
 
-            # For every security rule found in an NSG, generate a
-            # separate security rule (firewall rule) record to maintain
-            # parity with separate records for separate firewall rules
-            # in GCP.
-            if azure_record_type == 'nsg':
-                yield from _get_normalized_firewall_rules(record,
-                                                          subscription_id)
+        # For every security rule found in an NSG, generate a
+        # separate security rule (firewall rule) record to maintain
+        # parity with separate records for separate firewall rules
+        # in GCP.
+        if azure_record_type == 'nsg':
+            yield from _get_normalized_firewall_rules(
+                record, sub_index, sub, tenant)
 
-            if i + 1 == _max_recs:
-                _log.info('Ending records fetch for subscription due '
-                          'to _max_recs: %d; subscription_id: %s; '
-                          'record_type: %s', _max_recs,
-                          subscription_id, azure_record_type)
-                break
-
-    except CloudError as e:
-        _log.error('Failed to fetch details for %s; subscription_id: %s; '
-                   'error: %s: %s',
-                   azure_record_type, subscription_id, type(e).__name__, e)
+        if i + 1 == max_recs:
+            _log.info('Stopping %s fetch due to _max_recs: %d; %s',
+                      azure_record_type, max_recs,
+                      util.outline_az_sub(sub_index, sub, tenant))
+            break
 
 
-def _get_normalized_firewall_rules(nsg_record, subscription_id):
+def _get_normalized_firewall_rules(nsg_record, sub_index, sub, tenant):
     """Split a network security group (NSG) into multiple firewall rules.
 
     An Azure NSG record contains a top-level key named
@@ -205,7 +276,9 @@ def _get_normalized_firewall_rules(nsg_record, subscription_id):
 
     Arguments:
         nsg_record (dict): NSG record generated by this plugin.
-        subscription_id (str): Subscription ID (for logging purpose only).
+        sub_index (int): Subscription index (for logging only)
+        sub (Subscription): Azure subscription object (for logging only)
+        tenant (str): Azure tenant ID (for logging only)
 
     Yields:
         dict: A normalized firewall rule record with ``com`` bucket
@@ -216,7 +289,8 @@ def _get_normalized_firewall_rules(nsg_record, subscription_id):
     nsg_name = nsg_record.get('raw', {}).get('name')
 
     if security_rules is None:
-        _log.warning('Found NSG without security_rules; name: %s', nsg_name)
+        _log.warning('Found NSG without security_rules; name: %s; %s',
+                     nsg_name, util.outline_az_sub(sub_index, sub, tenant))
         return
 
     for i, security_rule in enumerate(security_rules):
@@ -257,8 +331,9 @@ def _get_normalized_firewall_rules(nsg_record, subscription_id):
             }
         }
 
-        _log.info('Found security_rule #%d; subscription_id: %s; name: %s',
-                  i, subscription_id, security_rule.get('name'))
+        _log.info('Found security_rule #%d: %s; %s',
+                  i, security_rule.get('name'),
+                  util.outline_az_sub(sub_index, sub, tenant))
         yield record
 
 

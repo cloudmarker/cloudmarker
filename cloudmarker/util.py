@@ -581,6 +581,23 @@ def send_email(from_addr, to_addrs, subject, content,
                    type(e).__name__, e)
 
 
+def outline_az_sub(sub_index, sub, tenant):
+    """Return a summary of an Azure subscription for logging purpose.
+
+    Arguments:
+        sub_index (int): Subscription index.
+        sub (Subscription): Azure subscription model object.
+        tenant (str): Azure Tenant ID.
+
+    Returns:
+        str: Return a string that can be used in log messages.
+
+    """
+    return ('subscription #{}: {} ({}) ({}); tenant: {}'
+            .format(sub_index, sub.get('subscription_id'),
+                    sub.get('display_name'), sub.get('state'), tenant))
+
+
 class PluginError(Exception):
     """Represents an error while loading a plugin."""
 

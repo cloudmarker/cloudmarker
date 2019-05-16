@@ -7,6 +7,23 @@ from unittest import mock
 from cloudmarker.clouds import azcloud
 
 
+class SimpleMock:
+    """A simple picklable class.
+
+    AzCloud sends subscription object and cloud records from main
+    process to worker processes and vice versa, so any mocks we use need
+    to be picklable (serializable). The :class:`unittest.mock.Mock` and
+    :class:`unittest.mock.MagicMock` classes are unpicklable, therefore
+    we create our own mock class here.
+    """
+
+    def __init__(self, data=None):
+        self._data = data if data else {}
+
+    def as_dict(self):
+        return self._data
+
+
 class AzCloudTest(unittest.TestCase):
     """Tests for AzCloud plugin."""
 
@@ -18,11 +35,17 @@ class AzCloudTest(unittest.TestCase):
     def setUp(self):
         self._patch('ServicePrincipalCredentials')
 
-        mock_record = mock.MagicMock()
+        mock_sub_record = SimpleMock()
+        mock_sub_record.subscription_id = 'foo_sub_id'
+        mock_sub_record.display_name = 'foo_display_name'
+        mock_sub_record.state = SimpleMock()
+        mock_sub_record.state.value = 'foo_state'
 
         m = self._patch('SubscriptionClient')
         self._MockSubscriptionClient = m
-        m().subscriptions.list.return_value = [mock_record]
+        m().subscriptions.list.return_value = [mock_sub_record]
+
+        mock_record = SimpleMock()
 
         m = self._patch('ComputeManagementClient')
         self._MockComputeManagementClient = m
@@ -47,8 +70,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_single_security_rule(self):
         mock_nsg_dict = {'security_rules': [{}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         # Note that the 'security_rules' list in the above mock NSG
         # record has only item: an empty dict. This tests the robustness
@@ -72,8 +94,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_multiple_security_rules(self):
         mock_nsg_dict = {'security_rules': [{}, {}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -88,8 +109,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_zero_security_rules(self):
         mock_nsg_dict = {'security_rules': []}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -104,8 +124,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_missing_security_rules(self):
         mock_nsg_dict = {}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -120,8 +139,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_firewall_rule_reference_has_security_rule_id(self):
         mock_nsg_dict = {'security_rules': [{'id': 'mock_id'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -138,8 +156,7 @@ class AzCloudTest(unittest.TestCase):
         mock_nsg_dict = {
             'security_rules': [{'provisioning_state': 'Succeeded'}]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -156,8 +173,7 @@ class AzCloudTest(unittest.TestCase):
         mock_nsg_dict = {
             'security_rules': [{'provisioning_state': 'Failed'}]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -172,8 +188,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_direction_inbound_normalization(self):
         mock_nsg_dict = {'security_rules': [{'direction': 'Inbound'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -188,8 +203,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_direction_outbound_normalization(self):
         mock_nsg_dict = {'security_rules': [{'direction': 'Outbound'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -204,8 +218,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_direction_other_normalization(self):
         mock_nsg_dict = {'security_rules': [{'direction': 'FoO'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -220,8 +233,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_access_allow_normalization(self):
         mock_nsg_dict = {'security_rules': [{'access': 'Allow'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -236,8 +248,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_access_deny_normalization(self):
         mock_nsg_dict = {'security_rules': [{'access': 'Deny'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -252,8 +263,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_access_other_normalization(self):
         mock_nsg_dict = {'security_rules': [{'access': 'FoO'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -268,8 +278,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_source_address_prefix_asterisk_normalization(self):
         mock_nsg_dict = {'security_rules': [{'source_address_prefix': '*'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -286,8 +295,7 @@ class AzCloudTest(unittest.TestCase):
         mock_nsg_dict = {
             'security_rules': [{'source_address_prefix': 'Internet'}]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -304,8 +312,7 @@ class AzCloudTest(unittest.TestCase):
         mock_nsg_dict = {
             'security_rules': [{'source_address_prefix': '40.0.0.0/8'}]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -322,8 +329,7 @@ class AzCloudTest(unittest.TestCase):
         mock_nsg_dict = {
             'security_rules': [{'source_address_prefixes': ['40.0.0.0/8']}]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -351,8 +357,7 @@ class AzCloudTest(unittest.TestCase):
         # rule but we are making sure here that even if they were to be
         # present, we are able to handle it in a sensible manner.
 
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -368,8 +373,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_protocol_name_normalization(self):
         mock_nsg_dict = {'security_rules': [{'protocol': 'TCP'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -384,8 +388,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_protocol_asterisk_normalization(self):
         mock_nsg_dict = {'security_rules': [{'protocol': '*'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -400,8 +403,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_destination_port_range_asterisk_normalization(self):
         mock_nsg_dict = {'security_rules': [{'destination_port_range': '*'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -416,8 +418,7 @@ class AzCloudTest(unittest.TestCase):
 
     def test_nsg_destination_port_range_number_normalization(self):
         mock_nsg_dict = {'security_rules': [{'destination_port_range': '22'}]}
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -434,8 +435,7 @@ class AzCloudTest(unittest.TestCase):
         mock_nsg_dict = {
             'security_rules': [{'destination_port_range': '8000-8080'}]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -454,8 +454,7 @@ class AzCloudTest(unittest.TestCase):
                 {'destination_port_ranges': ['22', '8000-8080']}
             ]
         }
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -484,8 +483,7 @@ class AzCloudTest(unittest.TestCase):
         # rule but we are making sure here that even if they were to be
         # present, we are able to handle it in a sensible manner.
 
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -513,8 +511,7 @@ class AzCloudTest(unittest.TestCase):
         # rule but we are making sure here that even if they were to be
         # present, we are able to handle it in a sensible manner.
 
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]
@@ -542,8 +539,7 @@ class AzCloudTest(unittest.TestCase):
         # rule but we are making sure here that even if they were to be
         # present, we are able to handle it in a sensible manner.
 
-        mock_nsg = mock.Mock()
-        mock_nsg.as_dict.return_value = mock_nsg_dict
+        mock_nsg = SimpleMock(mock_nsg_dict)
 
         m = self._MockNetworkManagementClient
         m().network_security_groups.list_all.return_value = [mock_nsg]

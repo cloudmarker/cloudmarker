@@ -35,7 +35,8 @@ def cloud_worker(audit_key, audit_version, plugin_key, plugin,
             objects to write records to.
     """
     worker_name = audit_key + '_' + plugin_key
-    _log.info('%s: Started', worker_name)
+    _log.info('cloud_worker: %s: Started', worker_name)
+
     try:
         for record in plugin.read():
             record['com'] = util.merge_dicts(record.get('com', {}), {
@@ -48,17 +49,14 @@ def cloud_worker(audit_key, audit_version, plugin_key, plugin,
             })
             for q in output_queues:
                 q.put(record)
-    except Exception as e:
-        _log.exception('%s: Failed; read() error: %s: %s',
-                       worker_name, type(e).__name__, e)
 
-    try:
         plugin.done()
+
     except Exception as e:
-        _log.exception('%s: Failed; done() error: %s: %s',
+        _log.exception('cloud_worker: %s: Failed; error: %s: %s',
                        worker_name, type(e).__name__, e)
 
-    _log.info('%s: Stopped', worker_name)
+    _log.info('cloud_worker: %s; Stopped', worker_name)
 
 
 def event_worker(audit_key, audit_version, plugin_key, plugin,
@@ -90,18 +88,16 @@ def event_worker(audit_key, audit_version, plugin_key, plugin,
             objects to write records to.
     """
     worker_name = audit_key + '_' + plugin_key
-    _log.info('%s: Started', worker_name)
-    while True:
-        record = input_queue.get()
-        if record is None:
-            try:
-                plugin.done()
-            except Exception as e:
-                _log.exception('%s: Failed; done() error: %s: %s',
-                               worker_name, type(e).__name__, e)
-            break
+    _log.info('event_worker: %s: Started', worker_name)
 
+    while True:
         try:
+            record = input_queue.get()
+            if record is None:
+                _log.info('event_worker: %s: Stopping', worker_name)
+                plugin.done()
+                break
+
             for event_record in plugin.eval(record):
                 event_record['com'] = \
                     util.merge_dicts(event_record.get('com', {}), {
@@ -112,13 +108,15 @@ def event_worker(audit_key, audit_version, plugin_key, plugin,
                         'origin_worker': worker_name,
                         'origin_type': 'event',
                     })
+
                 for q in output_queues:
                     q.put(event_record)
+
         except Exception as e:
-            _log.exception('%s: Failed; eval() error: %s: %s',
+            _log.exception('%s: Failed; worker error: %s: %s',
                            worker_name, type(e).__name__, e)
 
-    _log.info('%s: Stopped', worker_name)
+    _log.info('event_worker: %s: Stopped', worker_name)
 
 
 def store_worker(audit_key, audit_version, plugin_key, plugin,
@@ -179,29 +177,30 @@ def _write_worker(audit_key, audit_version, plugin_key, plugin,
         worker_type (str): Either ``'store'`` or ``'alert'``.
     """
     worker_name = audit_key + '_' + plugin_key
-    _log.info('%s: Started', worker_name)
+    _log.info('%s_worker: %s: Started', worker_type, worker_name)
+
     while True:
-        record = input_queue.get()
-        if record is None:
-            try:
-                plugin.done()
-            except Exception as e:
-                _log.exception('%s: Failed; done() error: %s: %s',
-                               worker_name, type(e).__name__, e)
-            break
-
-        record['com'] = util.merge_dicts(record.get('com', {}), {
-            'audit_key': audit_key,
-            'audit_version': audit_version,
-            'target_key': plugin_key,
-            'target_class': type(plugin).__name__,
-            'target_worker': worker_name,
-            'target_type': worker_type,
-        })
-
         try:
+            record = input_queue.get()
+            if record is None:
+                _log.info('%s_worker: %s: Stopping',
+                          worker_type, worker_name)
+                plugin.done()
+                break
+
+            record['com'] = util.merge_dicts(record.get('com', {}), {
+                'audit_key': audit_key,
+                'audit_version': audit_version,
+                'target_key': plugin_key,
+                'target_class': type(plugin).__name__,
+                'target_worker': worker_name,
+                'target_type': worker_type,
+            })
+
             plugin.write(record)
+
         except Exception as e:
-            _log.exception('%s: Failed; write() error: %s: %s',
-                           worker_name, type(e).__name__, e)
-    _log.info('%s: Stopped', worker_name)
+            _log.exception('%s_worker: %s: Failed; error: %s: %s',
+                           worker_type, worker_name, type(e).__name__, e)
+
+    _log.info('%s_worker: %s: Stopped', worker_type, worker_name)
