@@ -8,11 +8,11 @@ from cloudmarker.events import azvmosdiskencryptionevent
 
 base_record = {
     'ext':  {
+        'record_type': 'vm_instance_view',
         'os_disk_encrypted':  True
     },
     'com':  {
-        'cloud_type':  'azure',
-        'record_type':  'compute'
+        'cloud_type':  'azure'
     }
 }
 

@@ -31,32 +31,21 @@ class AzVMDataDiskEncryptionEvent:
             of an Azure virtual machine
 
         """
-        # If 'com' bucket is missing, we have a malformed record. Log a
-        # warning and ignore it.
-        com = record.get('com')
-        if com is None:
-            _log.warning('Virtual machine record is missing \'com\' key: %r',
-                         record)
-            return
-
-        # This plugin understands compute rule records only,
-        # so ignore  any other record types.
-        common_record_type = com.get('record_type')
-
-        if common_record_type != 'compute':
-            return
-
-        # If 'ext' bucket is missing, we have a malformed record. Log a
-        # warning and ignore it.
-        ext = record.get('ext')
+        ext = record.get('ext', {})
         if ext is None:
-            _log.warning('Virtual machine record is missing \'ext\' key: %r',
-                         record)
             return
-        all_data_disks_encrypted = ext.get('all_data_disks_encrypted')
 
+        if ext.get('record_type') != 'vm_instance_view':
+            return
+
+        all_data_disks_encrypted = ext.get('all_data_disks_encrypted')
         if all_data_disks_encrypted:
             return
+
+        com = record.get('com', {})
+        if com is None:
+            return
+
         if com.get('cloud_type') == 'azure':
             yield from _get_azure_vm_data_disk_encryption_event(
                 com, ext, record.get('raw'))
