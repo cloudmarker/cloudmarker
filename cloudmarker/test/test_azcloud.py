@@ -68,6 +68,10 @@ class AzCloudTest(unittest.TestCase):
         m().resource_groups.list.return_value = [mock_record]
         m().resources.list.return_value = [mock_record]
 
+        m = self._patch('MySQLManagementClient')
+        self._MockMySQLManagementClient = m
+        m().servers.list.return_value = [mock_record]
+
     def test_nsg_single_security_rule(self):
         mock_nsg_dict = {'security_rules': [{}]}
         mock_nsg = SimpleMock(mock_nsg_dict)
@@ -552,3 +556,27 @@ class AzCloudTest(unittest.TestCase):
 
         self.assertEqual(records[0]['com']['destination_ports'],
                          ['3389', '8000-8080'])
+
+    def test_mysql_server_record(self):
+        mock_mysql_server_dict = {
+            'id': 'azure_mysql_server_id',
+            'ssl_enforcement': 'Enabled',
+        }
+        mock_mysql_server = SimpleMock(mock_mysql_server_dict)
+
+        m = self._MockMySQLManagementClient
+        m().servers.list.return_value = [mock_mysql_server, mock_mysql_server]
+
+        records = list(azcloud.AzCloud('', '', '').read())
+        records = [
+            r for r in records
+            if r['ext']['record_type'] == 'mysql_server'
+        ]
+        self.assertEqual(records[0]['ext']['ssl_connection_enabled'],
+                         True)
+        self.assertEqual(records[0]['ext']['reference'],
+                         'azure_mysql_server_id')
+        self.assertEqual(records[0]['com']['reference'],
+                         'azure_mysql_server_id')
+        self.assertEqual(records[0]['com']['record_type'],
+                         'rdbms')
