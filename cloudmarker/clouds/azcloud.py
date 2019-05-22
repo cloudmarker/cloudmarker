@@ -11,6 +11,7 @@ from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.rdbms.mysql import MySQLManagementClient
+from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
 
@@ -86,7 +87,8 @@ class AzCloud:
 
             record_types = ('virtual_machine', 'app_gateway', 'lb', 'nic',
                             'nsg', 'public_ip', 'storage_account',
-                            'resource_group', 'mysql_server')
+                            'resource_group', 'mysql_server',
+                            'postgresql_server')
 
             tenant = self._tenant
             for sub_index, sub in enumerate(sub_list):
@@ -201,6 +203,10 @@ def _get_resource_iterator(record_type, credentials,
         client = MySQLManagementClient(credentials, sub_id)
         return client.servers.list()
 
+    if record_type == 'postgresql_server':
+        client = PostgreSQLManagementClient(credentials, sub_id)
+        return client.servers.list()
+
     # If control reaches here, there is a bug in this plugin. It means
     # there is a value in record_types variable in _get_subscriptions
     # that is not handled in the above if-statements.
@@ -230,6 +236,7 @@ def _get_record(iterator, azure_record_type, max_recs,
     record_type_map = {
         'virtual_machine': 'compute',
         'mysql_server': 'rdbms',
+        'postgresql_server': 'rdbms',
     }
 
     for i, v in enumerate(iterator):
@@ -261,7 +268,7 @@ def _get_record(iterator, azure_record_type, max_recs,
             yield from _get_normalized_firewall_rules(
                 record, sub_index, sub, tenant)
 
-        if azure_record_type == 'mysql_server':
+        if azure_record_type in ['mysql_server', 'postgresql_server']:
             yield from _get_normalized_rdbms_record(record)
             return
 

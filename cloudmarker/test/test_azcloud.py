@@ -72,6 +72,10 @@ class AzCloudTest(unittest.TestCase):
         self._MockMySQLManagementClient = m
         m().servers.list.return_value = [mock_record]
 
+        m = self._patch('PostgreSQLManagementClient')
+        self._MockPostgreSQLManagementClient = m
+        m().servers.list.return_value = [mock_record]
+
     def test_nsg_single_security_rule(self):
         mock_nsg_dict = {'security_rules': [{}]}
         mock_nsg = SimpleMock(mock_nsg_dict)
@@ -578,5 +582,29 @@ class AzCloudTest(unittest.TestCase):
                          'azure_mysql_server_id')
         self.assertEqual(records[0]['com']['reference'],
                          'azure_mysql_server_id')
+        self.assertEqual(records[0]['com']['record_type'],
+                         'rdbms')
+
+    def test_postgresql_server_record(self):
+        mock_postgresql_server_dict = {
+            'id': 'azure_postgresql_server_id',
+            'ssl_enforcement': 'Enabled',
+        }
+        mock_postgresql_server = SimpleMock(mock_postgresql_server_dict)
+
+        m = self._MockPostgreSQLManagementClient
+        m().servers.list.return_value = [mock_postgresql_server]
+
+        records = list(azcloud.AzCloud('', '', '').read())
+        records = [
+            r for r in records
+            if r['ext']['record_type'] == 'postgresql_server'
+        ]
+        self.assertEqual(records[0]['com']['tls_enforced'],
+                         True)
+        self.assertEqual(records[0]['ext']['reference'],
+                         'azure_postgresql_server_id')
+        self.assertEqual(records[0]['com']['reference'],
+                         'azure_postgresql_server_id')
         self.assertEqual(records[0]['com']['record_type'],
                          'rdbms')
