@@ -572,7 +572,7 @@ class AzCloudTest(unittest.TestCase):
             r for r in records
             if r['ext']['record_type'] == 'mysql_server'
         ]
-        self.assertEqual(records[0]['ext']['ssl_connection_enabled'],
+        self.assertEqual(records[0]['com']['tls_enforced'],
                          True)
         self.assertEqual(records[0]['ext']['reference'],
                          'azure_mysql_server_id')

@@ -472,10 +472,10 @@ def _get_normalized_rdbms_record(rdbms_record):
         'raw': rdbms_record.get('raw', {}),
         'ext': util.merge_dicts(rdbms_record.get('ext'), {
             'reference': rdbms_record.get('raw', {}).get('id'),
-            'ssl_connection_enabled': ssl_connection_enabled,
         }),
         'com': util.merge_dicts(rdbms_record.get('com'), {
             'reference': rdbms_record.get('raw', {}).get('id'),
+            'tls_enforced': ssl_connection_enabled,
         }),
 
     }

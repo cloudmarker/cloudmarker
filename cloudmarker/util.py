@@ -359,7 +359,9 @@ def friendly_string(technical_string):
     """
     phrase_map = {
         'azure': 'Azure',
-        'gcp': 'Google Cloud Platform (GCP)'
+        'gcp': 'Google Cloud Platform (GCP)',
+        'mysql_server': 'MySQL Server',
+        'postgresql_server': 'PostgreSQL Server'
     }
     return phrase_map.get(technical_string, technical_string)
 
