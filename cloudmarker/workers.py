@@ -56,7 +56,7 @@ def cloud_worker(audit_key, audit_version, plugin_key, plugin,
         _log.exception('cloud_worker: %s: Failed; error: %s: %s',
                        worker_name, type(e).__name__, e)
 
-    _log.info('cloud_worker: %s; Stopped', worker_name)
+    _log.info('cloud_worker: %s: Stopped', worker_name)
 
 
 def event_worker(audit_key, audit_version, plugin_key, plugin,
@@ -113,7 +113,7 @@ def event_worker(audit_key, audit_version, plugin_key, plugin,
                     q.put(event_record)
 
         except Exception as e:
-            _log.exception('%s: Failed; worker error: %s: %s',
+            _log.exception('event_worker: %s: Failed; error: %s: %s',
                            worker_name, type(e).__name__, e)
 
     _log.info('event_worker: %s: Stopped', worker_name)
