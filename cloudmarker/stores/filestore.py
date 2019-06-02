@@ -86,4 +86,4 @@ class FileStore:
 
             # Rename the temporary file to a JSON file.
             json_file_path = os.path.join(self._path, worker_name) + '.json'
-            os.rename(tmp_file_path, json_file_path)
+            os.replace(tmp_file_path, json_file_path)
