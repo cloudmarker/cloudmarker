@@ -26,16 +26,14 @@ _log = logging.getLogger(__name__)
 class GCPCloud:
     """GCP cloud plugin."""
 
-    def __init__(self, key_file_path, zone):
+    def __init__(self, key_file_path):
         """Create an instance of :class:`GCPCloud` plugin.
 
         Arguments:
             key_file_path (str): Path of the service account
                 key file for a project.
-            zone (str): Zone of GCP Project, e.g., ``us-east1-b``.
         """
         self._key_file_path = key_file_path
-        self._zone = zone
 
         # Service account key file also has the project name under the key
         # project_id. We will use this key file to get the project name for
@@ -121,32 +119,47 @@ class GCPCloud:
                 object contains details of a virtual machine instance.
 
         """
+        # Fetch all available zones for the current project
+        get_zones = self._compute_resource.zones()
+        list_zones = get_zones.list(project=self._project_name)
+        project_zones = list_zones.execute()
+
+        # Accumulate all zone names from list of zone metadata objects.
+        zones = [item['name'] for item in project_zones['items']]
+
         # Get instance resource to get the list of instances for a project and
         # execute that request.
         instance_resource = self._compute_resource.instances()
         instances = []
         next_page_token = None
 
-        while True:
-            # Prepare the request to get the list of all VM instances for a
-            # project and execute that request.
-            instances_object = instance_resource.list(
-                project=self._project_name,
-                pageToken=next_page_token,
-                zone=self._zone).execute()
+        # Iterating through all zones in the zones list, and collecting
+        # virtual machine instance details for each zone.
+        for zone in zones:
+            while True:
+                # Prepare the request to get the list of all VM instances for a
+                # project and execute that request.
+                instances_object = instance_resource.list(
+                    project=self._project_name,
+                    pageToken=next_page_token,
+                    zone=zone).execute()
 
-            instances.extend(instances_object['items'])
+                # instances_object will have details about virtual machine
+                # instances for that zone, only if it contains the 'item' key
+                if 'items' in instances_object.keys():
+                    instances.extend(instances_object['items'])
 
-            # instances_object will only contain the maximum number of results
-            # per page which is specified in options keyword argument
-            # maxResults in list() API call. The default value of maxResults is
-            # 500, if the result contains more than 500 records, nextPageToken
-            # key is present in response whose value is to be used to make the
-            # subsequent list() call.
-            if 'nextPageToken' not in instances_object.keys():
-                break
+                # instances_object will only contain the
+                # maximum number of results per page which is specified in
+                # options keyword argument maxResults in list() API call.
+                # The default value of maxResults is 500, if the result
+                # contains more than 500 records, nextPageToken
+                # key is present in response whose value
+                # is to be used to make the subsequent list() call.
+                if 'nextPageToken' not in instances_object.keys():
+                    break
 
-            next_page_token = instances_object['nextPageToken']
+                next_page_token = instances_object['nextPageToken']
 
         return instances
 

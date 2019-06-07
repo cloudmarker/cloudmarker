@@ -53,7 +53,7 @@ class GCPCloudTest(unittest.TestCase):
         mock_execute.return_value = mock_firewall_data
 
         # Consume the data from the generator
-        list(gcpcloud.GCPCloud('', '').read())
+        list(gcpcloud.GCPCloud('').read())
 
         mock_execute.assert_called_once_with()
 
@@ -73,7 +73,7 @@ class GCPCloudTest(unittest.TestCase):
                                     mock_firewall_data]
 
         # Consume the data from the generator
-        list(gcpcloud.GCPCloud('', '').read())
+        list(gcpcloud.GCPCloud('').read())
 
         self.assertEqual(mock_execute.mock_calls, [mock.call(), mock.call()])
 
@@ -88,10 +88,14 @@ class GCPCloudTest(unittest.TestCase):
         mock_execute = mock_discovery.build().instances().list().execute
         mock_execute.return_value = mock_instance_data
 
+        mock_zone_execute = mock_discovery.build().zones().list().execute
+        mock_zone_execute.return_value = {'items': [{'name': 'foozone'}]}
+
         # Consume the data from the generator
-        list(gcpcloud.GCPCloud('', '').read())
+        list(gcpcloud.GCPCloud('').read())
 
         mock_execute.assert_called_once_with()
+        mock_zone_execute.assert_called_once_with()
 
     @mock.patch('cloudmarker.clouds.gcpcloud.discovery')
     @mock.patch('cloudmarker.clouds.gcpcloud.service_account')
@@ -108,10 +112,14 @@ class GCPCloudTest(unittest.TestCase):
         mock_execute.side_effect = [mock_instance_data_with_next_page,
                                     mock_instance_data]
 
+        mock_zone_execute = mock_discovery.build().zones().list().execute
+        mock_zone_execute.return_value = {'items': [{'name': 'foozone'}]}
+
         # Consume the data from the generator
-        list(gcpcloud.GCPCloud('', '').read())
+        list(gcpcloud.GCPCloud('').read())
 
         self.assertEqual(mock_execute.mock_calls, [mock.call(), mock.call()])
+        mock_zone_execute.assert_called_once_with()
 
     def _patch(self, target):
         patcher = mock.patch('cloudmarker.clouds.gcpcloud.' + target)
@@ -137,7 +145,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -155,7 +163,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -174,7 +182,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -198,7 +206,7 @@ class GCPCloudTest(unittest.TestCase):
 
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -216,7 +224,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -234,7 +242,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -252,7 +260,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -270,7 +278,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -288,7 +296,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -306,7 +314,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -324,7 +332,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -342,7 +350,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -360,7 +368,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -377,7 +385,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
@@ -395,7 +403,7 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
-        records = list(gcpcloud.GCPCloud('', '').read())
+        records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
             if r['com']['record_type'] == 'firewall_rule'
