@@ -142,7 +142,7 @@ class Audit:
                 audit_key,
                 audit_version,
                 plugin_key,
-                util.load_plugin(config['plugins'][plugin_key]),
+                config['plugins'][plugin_key],
                 input_queue,
             )
             worker = mp.Process(target=workers.alert_worker, args=args)
@@ -156,7 +156,7 @@ class Audit:
                 audit_key,
                 audit_version,
                 plugin_key,
-                util.load_plugin(config['plugins'][plugin_key]),
+                config['plugins'][plugin_key],
                 input_queue,
                 self._alert_queues,
             )
@@ -171,7 +171,7 @@ class Audit:
                 audit_key,
                 audit_version,
                 plugin_key,
-                util.load_plugin(config['plugins'][plugin_key]),
+                config['plugins'][plugin_key],
                 input_queue,
             )
             worker = mp.Process(target=workers.store_worker, args=args)
@@ -184,7 +184,7 @@ class Audit:
                 audit_key,
                 audit_version,
                 plugin_key,
-                util.load_plugin(config['plugins'][plugin_key]),
+                config['plugins'][plugin_key],
                 self._store_queues + self._event_queues
             )
             worker = mp.Process(target=workers.cloud_worker, args=args)
@@ -197,19 +197,36 @@ class Audit:
 
         begin_record = {'com': {'record_type': 'begin_audit'}}
 
-        # Start store and alert workers first before cloud and event
-        # workers. See next comment to know why.
+        # Start store and alert workers.
         for w in self._store_workers + self._alert_workers:
             w.start()
 
-        # We want to send begin_audit record to store/alert plugins
-        # before any cloud/event workers can send their records to them.
+        # Start cloud and event workers.
+        for w in self._cloud_workers + self._event_workers:
+            w.start()
+
+        # Send begin_audit record to each sotre and alert plugin.
         for q in self._store_queues + self._alert_queues:
             q.put(begin_record)
 
-        # Now start the cloud and event workers.
-        for w in self._cloud_workers + self._event_workers:
-            w.start()
+        # It would have been nice if we could guarantee that the
+        # begin_audit records are sent to each store and alert before
+        # any cloud or event records are sent. But this is difficult to
+        # achieve because we must avoid forking a multithreaded process.
+        #
+        # See https://stackoverflow.com/q/55924761 for more details on
+        # why a multihreaded process should not be forked.
+        #
+        # The q.put() call starts a feeder thread, thus making the
+        # current process mulithreaded. Therefore, any forking (the
+        # w.start() calls) must be done prior to q.put() calls.
+        #
+        # As a result, we make the q.put() calls *after* starting the
+        # cloud workers. This means that it is not guaranteed that
+        # begin_audit record is the very first record that would be
+        # received by each store and alert plugin. However, the
+        # begin_audit record would be one of the several earliest
+        # records received by the plugins.
 
     def join(self):
         """Wait until all workers terminate."""

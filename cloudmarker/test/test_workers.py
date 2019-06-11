@@ -7,9 +7,28 @@ from unittest import mock
 
 from cloudmarker import workers
 
+# MockPluginClass pretends to be a mock plugin class.
+MockPluginClass = mock.Mock()
+
+# Instantiating MockPluginClass should return a mock that pretends to be
+# a mock plugin object.
+MockPluginClass.return_value = mock_plugin = mock.Mock()
+
+# Plugin config dictionary that can be used to instantiate the mock
+# plugin class.
+plugin_config = {
+    'plugin': 'cloudmarker.test.test_workers.MockPluginClass',
+}
+
 
 class WorkersTest(unittest.TestCase):
     """Tests for worker functions."""
+
+    def setUp(self):
+        # Reset the call history for the mock plugin class and mock
+        # plugin object.
+        mock_plugin.reset_mock()
+        MockPluginClass.reset_mock()
 
     def test_cloud_worker(self):
         # Mock plugin that generates mock records.
@@ -17,8 +36,7 @@ class WorkersTest(unittest.TestCase):
             {'raw': {'data': 'record1'}},
             {'raw': {'data': 'record2'}}
         ]
-        plugin = mock.Mock()
-        plugin.read = mock.Mock(return_value=mock_records)
+        mock_plugin.read.return_value = mock_records
 
         # Test output queues for the mock plugin.
         out_q1 = mp.Queue()
@@ -26,13 +44,15 @@ class WorkersTest(unittest.TestCase):
 
         # Invoke the mock plugin with the worker.
         workers.cloud_worker('fooaudit', 'fooversion', 'foocloud',
-                             plugin, [out_q1, out_q2])
+                             plugin_config, [out_q1, out_q2])
 
-        # Test that the worker invoked the mock plugin's read() method
-        # and finally invoked the mock plugin's done() method.
-        expected_calls = [mock.call.read(),
-                          mock.call.done()]
-        self.assertEqual(plugin.mock_calls, expected_calls)
+        # Test that the worker instantiated the mock plugin class, then
+        # invoked the mock plugin's read() method, and finally invoked
+        # the mock plugin's done() method.
+        expected_calls = [mock.call(),
+                          mock.call().read(),
+                          mock.call().done()]
+        self.assertEqual(MockPluginClass.mock_calls, expected_calls)
 
         # Test that the worker has put the two string records in both
         # the test output queues.
@@ -42,9 +62,6 @@ class WorkersTest(unittest.TestCase):
         self.assertEqual(out_q2.get()['raw'], {'data': 'record2'})
 
     def test_store_worker(self):
-        # Mock plugin.
-        plugin = mock.Mock()
-
         # Test input queue for the mock plugin.
         in_q = mp.Queue()
 
@@ -55,20 +72,19 @@ class WorkersTest(unittest.TestCase):
 
         # Invoke the mock plugin with the worker.
         workers.store_worker('fooaudit', 'fooversion', 'foostore',
-                             plugin, in_q)
+                             plugin_config, in_q)
 
-        # Test that the worker invoked the mock plugin's write()
-        # method twice (once for each record) and finally invoked the
-        # mock plugin's done() method (for the None input).
-        expected_calls = [mock.call.write(mock.ANY),
-                          mock.call.write(mock.ANY),
-                          mock.call.done()]
-        self.assertEqual(plugin.mock_calls, expected_calls)
+        # Test that the worker instantiated the mock plugin class, then
+        # invoked the mock plugin's write() method twice (once for each
+        # record), and finally invoked the mock plugin's done() method
+        # (for the None input).
+        expected_calls = [mock.call(),
+                          mock.call().write(mock.ANY),
+                          mock.call().write(mock.ANY),
+                          mock.call().done()]
+        self.assertEqual(MockPluginClass.mock_calls, expected_calls)
 
     def test_alert_worker(self):
-        # Mock plugin.
-        plugin = mock.Mock()
-
         # Test input queue for the mock plugin.
         in_q = mp.Queue()
 
@@ -79,15 +95,17 @@ class WorkersTest(unittest.TestCase):
 
         # Invoke the mock plugin with the worker.
         workers.alert_worker('fooaudit', 'fooversion', 'fooalert',
-                             plugin, in_q)
+                             plugin_config, in_q)
 
-        # Test that the worker invoked the mock plugin's write()
-        # method twice (once for each record) and finally invoked the
-        # mock plugin's done() method (for the None input).
-        expected_calls = [mock.call.write(mock.ANY),
-                          mock.call.write(mock.ANY),
-                          mock.call.done()]
-        self.assertEqual(plugin.mock_calls, expected_calls)
+        # Test that the worker instantiated the mock plugin class, then
+        # invoked the mock plugin's write() method twice (once for each
+        # record), and finally invoked the mock plugin's done() method
+        # (for the None input).
+        expected_calls = [mock.call(),
+                          mock.call().write(mock.ANY),
+                          mock.call().write(mock.ANY),
+                          mock.call().done()]
+        self.assertEqual(MockPluginClass.mock_calls, expected_calls)
 
     def test_event_worker(self):
         # A fake_eval function that returns two fake records: length of
@@ -97,8 +115,7 @@ class WorkersTest(unittest.TestCase):
             yield {'ext': {'upper': s.upper()}}
 
         # Mock plugin.
-        plugin = mock.Mock()
-        plugin.eval = mock.Mock(side_effect=fake_eval)
+        mock_plugin.eval = mock.Mock(side_effect=fake_eval)
 
         # Test input queue and output queues for the mock plugin.
         in_q = mp.Queue()
@@ -112,15 +129,17 @@ class WorkersTest(unittest.TestCase):
 
         # Invoke the mock plugin with the worker.
         workers.event_worker('fooaudit', 'fooversion', 'fooevent',
-                             plugin, in_q, [out_q1, out_q2])
+                             plugin_config, in_q, [out_q1, out_q2])
 
-        # Test that the worker invoked the mock plugin's eval() method
-        # twice (once for each input string record) and finally invoked
-        # the mock plugin's done() method (for the None input).
-        expected_calls = [mock.call.eval('record1'),
-                          mock.call.eval('record2'),
-                          mock.call.done()]
-        self.assertEqual(plugin.mock_calls, expected_calls)
+        # Test that the worker instantiated the mock plugin class, then
+        # invoked the mock plugin's eval() method twice (once for each
+        # input string record), and finally invoked the mock plugin's
+        # done() method (for the None input).
+        expected_calls = [mock.call(),
+                          mock.call().eval('record1'),
+                          mock.call().eval('record2'),
+                          mock.call().done()]
+        self.assertEqual(MockPluginClass.mock_calls, expected_calls)
 
         # Test that the worker has put the values yielded by fake_eval
         # in the test output queues.
