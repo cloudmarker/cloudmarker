@@ -38,6 +38,9 @@ plugins:
   azvmdatadiskencryptionevent:
     plugin: cloudmarker.events.azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent
 
+  rdbmsenforcetlsevent:
+    plugin: cloudmarker.events.rdbmsenforcetlsevent.RDBMSEnforceTLSEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
