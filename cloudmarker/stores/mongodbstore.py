@@ -34,7 +34,8 @@ class MongoDBStore:
             host=host,
             port=port,
             username=username,
-            password=password
+            password=password,
+            connect=False
         )
 
         self._collection = self._client[db][collection]
