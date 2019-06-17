@@ -1,21 +1,24 @@
 """Tests for gcpcloud plugin."""
 
 
-import copy
 import unittest
 from unittest import mock
 
 from cloudmarker.clouds import gcpcloud
 
-mock_firewall_data = {
-    'kind': 'compute#firewallList',
+mock_projects_dict = {
+    'projects': [
+        {
+            'projectId': 'fooproject',
+            'name': 'fooproject'
+        }
+    ]
+}
+
+mock_zones_data = {
     'items': [
         {
-            'priority': 42,
-            'direction': 'ingress',
-            'sourceRanges': [
-                '0.0.0.0',
-            ]
+            'name': 'foozone'
         }
     ]
 }
@@ -37,153 +40,125 @@ mock_instance_data = {
     'selfLink': 'str'
 }
 
-mock_zones_data = {
-    'items': [
-        {
-            'name': 'foozone'
-        }
-    ]
-}
-
-mock_projects_dict = {
-    'projects': [
-        {
-            'projectId': 'fooproject',
-            'name': 'fooproject'
-        }
-    ]
-}
-
 
 class GCPCloudTest(unittest.TestCase):
     """Tests for gcpcloud plugin."""
 
-    @mock.patch('cloudmarker.clouds.gcpcloud.discovery')
-    @mock.patch('cloudmarker.clouds.gcpcloud.service_account')
-    @mock.patch('builtins.open', mock.mock_open(
-        read_data='{"project_id": "foo"}'))
-    def test_firewall_without_next_page_token(
-            self,
-            mock_service_account,
-            mock_discovery):
-        mock_execute = mock_discovery.build().firewalls().list().execute
-        mock_execute.return_value = mock_firewall_data
-
-        mock_project_execute = mock_discovery.build().projects().list().execute
-        mock_project_execute.return_value = mock_projects_dict
-
-        # Consume the data from the generator
-        list(gcpcloud.GCPCloud('').read())
-
-        mock_execute.assert_called_once_with()
-        mock_project_execute.assert_called_once_with()
-
-    @mock.patch('cloudmarker.clouds.gcpcloud.discovery')
-    @mock.patch('cloudmarker.clouds.gcpcloud.service_account')
-    @mock.patch('builtins.open', mock.mock_open(
-        read_data='{"project_id": "foo"}'))
-    def test_firewall_with_next_page_token(
-            self,
-            mock_service_account,
-            mock_discovery):
-        mock_firewall_data_with_next_page = copy.deepcopy(mock_firewall_data)
-        mock_firewall_data_with_next_page.update({'nextPageToken': 'bar'})
-
-        mock_projects_data_with_next_page = copy.deepcopy(mock_projects_dict)
-        mock_projects_data_with_next_page.update({'nextPageToken': 'bar'})
-
-        mock_execute = mock_discovery.build().firewalls().list().execute
-        mock_execute.side_effect = [mock_firewall_data_with_next_page,
-                                    mock_firewall_data] * 2
-
-        mock_project_execute = mock_discovery.build().projects().list().execute
-        mock_project_execute.side_effect = [mock_projects_data_with_next_page,
-                                            mock_projects_dict]
-
-        # Consume the data from the generator
-        list(gcpcloud.GCPCloud('').read())
-
-        self.assertEqual(mock_execute.mock_calls,
-                         [mock.call(), mock.call()] * 2)
-        self.assertEqual(mock_project_execute.mock_calls,
-                         [mock.call(), mock.call()])
-
-    @mock.patch('cloudmarker.clouds.gcpcloud.discovery')
-    @mock.patch('cloudmarker.clouds.gcpcloud.service_account')
-    @mock.patch('builtins.open', mock.mock_open(
-        read_data='{"project_id": "foo"}'))
-    def test_instance_without_next_page_token(
-            self,
-            mock_service_account,
-            mock_discovery):
-        mock_execute = mock_discovery.build().instances().list().execute
-        mock_execute.return_value = mock_instance_data
-
-        mock_zone_execute = mock_discovery.build().zones().list().execute
-        mock_zone_execute.return_value = mock_zones_data
-
-        mock_project_execute = mock_discovery.build().projects().list().execute
-        mock_project_execute.return_value = mock_projects_dict
-
-        # Consume the data from the generator
-        list(gcpcloud.GCPCloud('').read())
-
-        mock_execute.assert_called_once_with()
-        mock_zone_execute.assert_called_once_with()
-        mock_project_execute.assert_called_once_with()
-
-    @mock.patch('cloudmarker.clouds.gcpcloud.discovery')
-    @mock.patch('cloudmarker.clouds.gcpcloud.service_account')
-    @mock.patch('builtins.open', mock.mock_open(
-        read_data='{"project_id": "foo"}'))
-    def test_instance_with_next_page_token(
-            self,
-            mock_service_account,
-            mock_discovery):
-        mock_instance_data_with_next_page = copy.deepcopy(mock_instance_data)
-        mock_instance_data_with_next_page.update({'nextPageToken': 'bar'})
-
-        mock_zones_data_with_next_page = copy.deepcopy(mock_zones_data)
-        mock_zones_data_with_next_page.update({'nextPageToken': 'bar'})
-
-        mock_projects_data_with_next_page = copy.deepcopy(mock_projects_dict)
-        mock_projects_data_with_next_page.update({'nextPageToken': 'bar'})
-
-        mock_execute = mock_discovery.build().instances().list().execute
-        mock_execute.side_effect = [mock_instance_data_with_next_page,
-                                    mock_instance_data] * 4
-
-        mock_zone_execute = mock_discovery.build().zones().list().execute
-        mock_zone_execute.side_effect = [mock_zones_data_with_next_page,
-                                         mock_zones_data] * 2
-
-        mock_project_execute = mock_discovery.build().projects().list().execute
-        mock_project_execute.side_effect = [mock_projects_data_with_next_page,
-                                            mock_projects_dict]
-
-        # Consume the data from the generator
-        list(gcpcloud.GCPCloud('').read())
-
-        self.assertEqual(mock_execute.mock_calls,
-                         [mock.call(), mock.call()] * 4)
-        self.assertEqual(mock_zone_execute.mock_calls,
-                         [mock.call(), mock.call()] * 2)
-        self.assertEqual(mock_project_execute.mock_calls,
-                         [mock.call(), mock.call()])
-
     def _patch(self, target):
-        patcher = mock.patch('cloudmarker.clouds.gcpcloud.' + target)
+        patcher = mock.patch('cloudmarker.clouds.gcpcloud.'+target)
         self.addCleanup(patcher.stop)
         return patcher.start()
 
     def setUp(self):
-        patcher = mock.patch('builtins.open',
-                             mock.mock_open(read_data='{"project_id": "foo"}'))
-        self.addCleanup(patcher.stop)
-        patcher.start()
-
         self._patch('service_account')
         self._mock_discovery = self._patch('discovery')
+
+    def test_project_without_next_page_token(self):
+        mock_project_execute = \
+            self._mock_discovery.build().projects().list().execute
+        mock_project_execute.return_value = mock_projects_dict
+
+        mock_project_list_next = \
+            self._mock_discovery.build().projects().list_next
+        mock_project_list_next.return_value = None
+
+        mock_firewall_execute = \
+            self._mock_discovery.build().firewalls().list().execute
+        mock_firewall_execute.return_value = {}
+
+        mock_firewall_list_next = \
+            self._mock_discovery.build().firewalls().list_next
+        mock_firewall_list_next.return_value = None
+
+        mock_zone_execute = self._mock_discovery.build().zones().list().execute
+        mock_zone_execute.return_value = {}
+
+        mock_zone_list_next = self._mock_discovery.build().zones().list_next
+        mock_zone_list_next.return_value = None
+
+        # Consume the data from the generator
+        list(gcpcloud.GCPCloud('').read())
+
+        mock_project_execute.assert_called_once_with()
+        mock_project_list_next.assert_called_once_with(
+            previous_request=mock.ANY, previous_response=mock.ANY)
+
+    def test_project_with_next_page_token(self):
+        mock_project_execute = \
+            self._mock_discovery.build().projects().list().execute
+        mock_project_execute.side_effect = [mock_projects_dict,
+                                            mock_projects_dict]
+
+        mock_project_list_next = \
+            self._mock_discovery.build().projects().list_next
+        mock_project_list_next.side_effect = [
+            self._mock_discovery.build().projects().list(), None
+        ]
+
+        mock_firewall_execute = \
+            self._mock_discovery.build().firewalls().list().execute
+        mock_firewall_execute.side_effect = [{}, {}]
+
+        mock_firewall_list_next = \
+            self._mock_discovery.build().firewalls().list_next
+        mock_firewall_list_next.side_effect = [None, None]
+
+        mock_zone_execute = self._mock_discovery.build().zones().list().execute
+        mock_zone_execute.side_effect = [{}, {}]
+
+        mock_zone_list_next = self._mock_discovery.build().zones().list_next
+        mock_zone_list_next.side_effect = [None, None]
+
+        # Consume the data from the generator
+        list(gcpcloud.GCPCloud('').read())
+
+        self.assertEqual(mock_project_execute.mock_calls,
+                         [mock.call(), mock.call()])
+        self.assertEqual(mock_project_list_next.mock_calls,
+                         [mock.call(previous_request=mock.ANY,
+                                    previous_response=mock.ANY),
+                          mock.call(previous_request=mock.ANY,
+                                    previous_response=mock.ANY)])
+
+    def test_instance_without_next_page_token(self):
+        mock_project_execute = \
+            self._mock_discovery.build().projects().list().execute
+        mock_project_execute.return_value = mock_projects_dict
+
+        mock_project_list_next = \
+            self._mock_discovery.build().projects().list_next
+        mock_project_list_next.return_value = None
+
+        mock_firewall_execute = \
+            self._mock_discovery.build().firewalls().list().execute
+        mock_firewall_execute.return_value = {}
+
+        mock_firewall_list_next = \
+            self._mock_discovery.build().firewalls().list_next
+        mock_firewall_list_next.return_value = None
+
+        mock_zone_execute = self._mock_discovery.build().zones().list().execute
+        mock_zone_execute.return_value = mock_zones_data
+
+        mock_zone_list_next = self._mock_discovery.build().zones().list_next
+        mock_zone_list_next.return_value = None
+
+        mock_instance_execute = \
+            self._mock_discovery.build().instances().list().execute
+        mock_instance_execute.return_value = mock_instance_data
+
+        mock_instance_list_next = \
+            self._mock_discovery.build().instances().list_next
+        mock_instance_list_next.return_value = None
+
+        # Consume the data from the generator
+        records = list(gcpcloud.GCPCloud('').read())
+
+        records = [
+            r for r in records
+            if r['ext']['zone'] == 'foozone'
+        ]
+        self.assertEqual(len(records), 1)
 
     def test_firewall_single_allowed_rule(self):
         mock_firewall_dict = {
@@ -195,7 +170,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -214,7 +193,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -234,7 +217,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -259,7 +246,11 @@ class GCPCloudTest(unittest.TestCase):
 
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -278,7 +269,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -297,7 +292,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -316,7 +315,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -335,7 +338,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -354,7 +361,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -373,7 +384,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -392,7 +407,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -411,7 +430,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -430,7 +453,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -448,7 +475,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records
@@ -467,7 +498,11 @@ class GCPCloudTest(unittest.TestCase):
         }
         m = self._mock_discovery
         m.build().projects().list().execute.return_value = mock_projects_dict
+        m.build().projects().list_next.return_value = None
         m.build().firewalls().list().execute.return_value = mock_firewall_dict
+        m.build().firewalls().list_next.return_value = None
+        m.build().zones().list().execute.return_value = {}
+        m.build().zones().list_next.return_value = None
         records = list(gcpcloud.GCPCloud('').read())
         records = [
             r for r in records

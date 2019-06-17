@@ -600,6 +600,27 @@ def outline_az_sub(sub_index, sub, tenant):
                     sub.get('display_name'), sub.get('state'), tenant))
 
 
+def outline_gcp_project(project_index, project, zone, key_file_path):
+    """Return a summary of a GCP project for logging purpose.
+
+    Arguments:
+        project_index (int): Project index.
+        project (Resource): GCP Resource object of the project.
+        zone (str): Name of the zone for the project.
+        key_file_path (str): Path of the service account key file
+            for a project.
+
+    Returns:
+        str: Return a string that can be used in log messages.
+
+    """
+    zone_log = '' if zone is None else 'zone: {}; '.format(zone)
+    return ('project #{}: {} ({}) ({}); {}key_file_path: {}'
+            .format(project_index, project.get('projectId'),
+                    project.get('name'), project.get('lifecycleState'),
+                    zone_log, key_file_path))
+
+
 class PluginError(Exception):
     """Represents an error while loading a plugin."""
 

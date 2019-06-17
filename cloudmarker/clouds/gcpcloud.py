@@ -4,13 +4,13 @@ This module defines the :class:`GCPCloud` class that retrieves data from
 Google Cloud Platform.
 """
 
-
+import json
 import logging
 
 from google.oauth2 import service_account
 from googleapiclient import discovery
 
-from cloudmarker import util
+from cloudmarker import ioworkers, util
 
 _GCP_SCOPES = ['https://www.googleapis.com/auth/compute.readonly',
                'https://www.googleapis.com/auth/cloud-platform.read-only']
@@ -26,7 +26,8 @@ _log = logging.getLogger(__name__)
 class GCPCloud:
     """GCP cloud plugin."""
 
-    def __init__(self, key_file_path, _max_projects=0):
+    def __init__(self, key_file_path, processes=4, threads=30,
+                 _max_projects=0):
         """Create an instance of :class:`GCPCloud` plugin.
 
          Note: The ``_max_projects`` argument should be used only in the
@@ -37,29 +38,45 @@ class GCPCloud:
         Arguments:
             key_file_path (str): Path of the service account
                 key file for a project.
+            processes (int): Number of processes to launch.
+            threads (int): Number of threads to launch in each process.
             _max_projects (int): Maximum number of projects to fetch
                 data for if the value is greater than 0.
         """
         self._key_file_path = key_file_path
+        self._processes = processes
+        self._threads = threads
         self._max_projects = _max_projects
-        # Generating scoped credentials which will be required by the
-        # discovery.build to create a resource object which we will use to
-        # communicate with the API.
-        credentials = service_account.Credentials
-        self._credentials = credentials.from_service_account_file(
-            self._key_file_path,
-            scopes=_GCP_SCOPES)
 
-        # Currently generating scoped resources with googleapiclient, requires
-        # service_name and version information, the more complete information
-        # about available_service name and their corresponding version is
-        # located at
-        # https://developers.google.com/api-client-library/python/apis/
-        self._compute_resource = self._get_resource('compute', 'v1')
+        # Service account key file also has the client email under the key
+        # client_email. We will use this key file to get the client email for
+        # this request.
+        try:
+            with open(self._key_file_path) as f:
+                self._client_email = json.loads(f.read()).get('client_email')
+        except OSError as e:
+            self._client_email = '<unknown>'
+            _log.error('Failed to read client_email from key file: %s; '
+                       'error: %s: %s', self._key_file_path,
+                       type(e).__name__, e)
 
-        self._cloud_resource = self._get_resource('cloudresourcemanager', 'v1')
+        _log.info('Initialized; key_file_path: %s; processes: %s; threads: %s',
+                  self._key_file_path, self._processes, self._threads)
 
-    def _get_resource(self, service_name, version='v1'):
+    def read(self):
+        """Return a GCP cloud infrastructure configuration record.
+
+        Yields:
+            dict: A GCP cloud infrastructure configuration record.
+
+        """
+        yield from ioworkers.run(self._get_projects,
+                                 self._get_resources,
+                                 self._processes,
+                                 self._threads,
+                                 __name__)
+
+    def _build_resource(self, service_name, version='v1'):
         """Create a ``Resource`` object for interacting with Google APIs.
 
         Arguments:
@@ -71,213 +88,195 @@ class GCPCloud:
                 interacting with Google APIs.
 
         """
-        # cache_discovery is boolean keyword argument that tells builder
-        # whether or not to cache the discovery doc.
+        credential = service_account.Credentials.from_service_account_file(
+            self._key_file_path,
+            scopes=_GCP_SCOPES)
         return discovery.build(service_name,
                                version,
-                               credentials=self._credentials,
+                               credentials=credential,
                                cache_discovery=False)
 
-    def _get_firewalls(self, project_id):
-        """Query the compute resource and return firewall rules.
+    def _get_projects(self):
+        """Generate tuples of record types and projects.
 
-        Arguments:
-            project_id (str): ID of the project for which firewall rules
-                have to be obtained.
+        The yielded tuples when unpacked would become arguments for
+        :meth:`_get_resources`. Each such tuple represents a single unit
+        of work that :meth:`_get_resources` can work on independently in
+        its own worker thread.
 
-        Returns:
-            list: A list of :obj:`dict` objects where each :obj:`dict`
-                object contains a firewall rule.
-
-        """
-        # Get firewall resource from the compute resource
-        firewall_resource = self._compute_resource.firewalls()
-
-        firewall_rules = []
-        next_page_token = None
-
-        while True:
-            # Prepare the request to get the list of all firewall rules for a
-            # project and execute that request.
-            firewall_rules_object = firewall_resource.list(
-                project=project_id,
-                pageToken=next_page_token).execute()
-
-            # firewall_rules_object contains firewall rules for the project
-            # if it has the 'items' key.
-            firewall_rules.extend(firewall_rules_object.get('items', []))
-
-            # firewall_rules_object will only contain the maximum number of
-            # results per page which is specified in options keyword argument
-            # maxResults in list() API call. The default value of maxResults is
-            # 500, if the result contains more than 500 records, nextPageToken
-            # is present in response whose value is to be used to make the
-            # subsequent list() call.
-            if 'nextPageToken' not in firewall_rules_object.keys():
-                break
-
-            next_page_token = firewall_rules_object['nextPageToken']
-
-        return firewall_rules
-
-    def _get_instances(self, project_id):
-        """Query the compute resource and returns instance list.
-
-        Arguments:
-            project_id (str): ID of the project for which instance records
-                have to be obtained.
-
-        Returns:
-            list: A list of :obj:`dict` objects where each :obj:`dict`
-                object contains details of a virtual machine instance.
+        Yields:
+            tuple: A tuple which when unpacked forms valid arguments for
+                :meth:`_get_resources`.
 
         """
-        # Fetch all available zones for the current project
-        get_zones = self._compute_resource.zones()
+        try:
+            cloud_resource = self._build_resource('cloudresourcemanager', 'v1')
+            compute_resource = self._build_resource('compute', 'v1')
 
-        next_page_token = None
-        zones = []
-        while True:
-            list_zones = get_zones.list(
-                project=project_id,
-                pageToken=next_page_token).execute()
+            projects = _get_resource_iterator(cloud_resource.projects(),
+                                              'projects', self._key_file_path)
 
-            if 'items' in list_zones.keys():
-                zones.extend([item['name'] for item in list_zones['items']])
+            for project_index, project in enumerate(projects):
+                project_id = project.get('projectId')
 
-            if 'nextPageToken' not in list_zones.keys():
-                break
+                _log.info('Found %s',
+                          util.outline_gcp_project(project_index, project,
+                                                   None, self._key_file_path))
 
-            next_page_token = list_zones['nextPageToken']
+                yield ('firewall', project_index, project)
 
-        # Get instance resource to get the list of instances for a project and
-        # execute that request.
-        instance_resource = self._compute_resource.instances()
-        instances = []
-        next_page_token = None
+                zones = _get_resource_iterator(compute_resource.zones(),
+                                               'items', self._key_file_path,
+                                               project=project_id)
 
-        # Iterating through all zones in the zones list, and collecting
-        # virtual machine instance details for each zone.
-        for zone in zones:
-            while True:
-                # Prepare the request to get the list of all VM instances for a
-                # project and execute that request.
-                instances_object = instance_resource.list(
-                    project=project_id,
-                    pageToken=next_page_token,
-                    zone=zone).execute()
+                for zone in zones:
+                    yield ('instance', project_index, project,
+                           zone.get('name'))
 
-                # instances_object will have details about virtual machine
-                # instances for that zone, only if it contains the 'item' key
-                instances.extend(instances_object.get('items', []))
-
-                # instances_object will only contain the
-                # maximum number of results per page which is specified in
-                # options keyword argument maxResults in list() API call.
-                # The default value of maxResults is 500, if the result
-                # contains more than 500 records, nextPageToken
-                # key is present in response whose value
-                # is to be used to make the subsequent list() call.
-                if 'nextPageToken' not in instances_object.keys():
+                if project_index + 1 == self._max_projects:
+                    _log.info('Stopping projects fetch due to '
+                              '_max_projects: %d; key_file_path: %s',
+                              self._max_projects, self._key_file_path)
                     break
 
-                next_page_token = instances_object['nextPageToken']
+        except Exception as e:
+            _log.error('Failed to fetch projects; key_file_path: %s; '
+                       'error: %s: %s', self._key_file_path,
+                       type(e).__name__, e)
 
-        return instances
-
-    def read(self):
+    def _get_resources(self, record_type, project_index, project, zone=None):
         """Return a GCP infrastructure configuration record.
+
+        Arguments:
+            record_type (str): Type of record whose details have to be fetched
+                from GCP.
+            project_index (int): Project index
+            project (Resource): GCP Resource object of the project.
+            zone (str): Name of the zone for the project.
 
         Yields:
             dict: Firewall rule or VM instance configuration data.
 
         """
-        project_ids = []
-        project_names = []
-        next_page_token = None
+        _log.info('Working on %s list; %s', record_type,
+                  util.outline_gcp_project(project_index, project, zone,
+                                           self._key_file_path))
 
-        # Fetch all available projects for current key file.
-        projects_resource = self._cloud_resource.projects()
-        while True:
-            projects = projects_resource.list(
-                pageToken=next_page_token).execute()
+        project_id = project.get('projectId')
+        try:
+            if record_type == 'firewall':
+                resource = self._build_resource('compute', 'v1')
+                iterator = _get_resource_iterator(resource.firewalls(),
+                                                  'items', self._key_file_path,
+                                                  project=project_id)
 
-            # Accumulate all project IDs and project names in a list.
-            if 'projects' in projects.keys():
-                project_ids.extend(
-                    [item['projectId'] for item in projects['projects']])
+            elif record_type == 'instance':
+                resource = self._build_resource('compute', 'v1')
+                iterator = _get_resource_iterator(resource.instances(),
+                                                  'items', self._key_file_path,
+                                                  project=project_id,
+                                                  zone=zone)
+            else:
+                _log.warning('Unrecognized record_type: %s; %s', record_type,
+                             util.outline_gcp_project(project_index,
+                                                      project, zone,
+                                                      self._key_file_path))
 
-                project_names.extend(
-                    [item['name'] for item in projects['projects']])
+        except Exception as e:
+            _log.error('Failed to fetch details for %s; %s; error: %s: %s',
+                       record_type,
+                       util.outline_gcp_project(project_index, project, zone,
+                                                self._key_file_path),
+                       type(e).__name__, e)
 
-            if 'nextPageToken' not in projects.keys():
-                break
+        yield from self._make_record(iterator, record_type,
+                                     project_index, project, zone)
 
-            next_page_token = projects['nextPageToken']
+    def _make_record(self, iterator, gcp_record_type, project_index, project,
+                     zone):
+        """Process a list of GCP resource objects.
 
-        for i, project in enumerate(project_ids):
-            try:
-                projects_resource.get(projectId=project).execute()
-            except Exception as e:
-                _log.error('Failed to retrieve project: %s; error: %s: %s',
-                           project, type(e).__name__, e)
-                continue
+        Arguments:
+          iterator: An iterator to iterate over raw GCP ``dict`` objects.
+          gcp_record_type (str): Type of record as per GCP vocabulary.
+          project_index (int): Project index (for logging only).
+          project (dict): GCP project object.
+          zone (str): GCP zone name.
 
-            firewalls = self._get_firewalls(project)
-            instances = self._get_instances(project)
+        Yields:
+          dict: An GCP record that can be consumed by the framework.
 
-            _log.info('Found %d firewall records for project %s',
-                      len(firewalls), project)
-            _log.info('Found %d instances for project %s',
-                      len(instances), project)
-
-            for firewall in firewalls:
-                record = {
-                    'raw': firewall,
-                    'ext': {
-                        'cloud_type': 'gcp',
-                        'record_type': 'firewall',
-                        'project_id': project,
-                        'project_name': project_names[i]
-                    },
-                    'com': {
-                        'cloud_type': 'gcp',
-                        'record_type': None,
-                    }
+        """
+        record_type_map = {
+            'compute': 'compute',
+        }
+        for i, raw_record in enumerate(iterator):
+            record = {
+                'raw': raw_record,
+                'ext': {
+                    'cloud_type': 'gcp',
+                    'record_type': gcp_record_type,
+                    'project_id': project.get('projectId'),
+                    'project_name': project.get('name'),
+                    'zone': zone,
+                    'key_file_path': self._key_file_path,
+                    'client_email': self._client_email
+                },
+                'com': {
+                    'cloud_type': 'gcp',
+                    'record_type': record_type_map.get(gcp_record_type)
                 }
-                yield record
-                yield from _get_normalized_firewall_rules(record)
+            }
 
-            for instance in instances:
-                record = {
-                    'raw': instance,
-                    'ext': {
-                        'record_type': 'compute',
-                        'project_id': project,
-                        'project_name': project_names[i]
-                    },
-                    'com': {
-                        'cloud_type': 'gcp',
-                        'record_type': 'compute'
-                    }
-                }
-                yield record
+            _log.info('Found %s #%d: %s; %s', gcp_record_type, i,
+                      raw_record.get('name'),
+                      util.outline_gcp_project(project_index, project, zone,
+                                               self._key_file_path))
+            yield record
 
-            if i + 1 == self._max_projects:
-                _log.info('Stopping fetch for %s due to _max_projects: %d',
-                          project, self._max_projects)
-                break
+            if gcp_record_type == 'firewall':
+                yield from _get_normalized_firewall_rules(record,
+                                                          project_index,
+                                                          project,
+                                                          self._key_file_path)
 
     def done(self):
-        """Perform clean up tasks.
-
-        Currently, this method does nothing because there are no clean
-        up tasks associated with the :class:`GCPCloud` plugin. This
-        may change in future.
-        """
+        """Log a message that this plugin is done."""
+        _log.info('Done; key_file_path: %s; processes: %s; threads: %s',
+                  self._key_file_path, self._processes, self._threads)
 
 
-def _get_normalized_firewall_rules(firewall_record):
+def _get_resource_iterator(resource, key, key_file_path, **list_kwargs):
+    """Generate records for specific record types.
+
+    Arguments:
+        resource (Resource): GCP resource object.
+        key (str): The key that we need to look up in the GCP
+            response JSON to find the list of resources.
+        list_kwargs (dict): Keyword arguments for
+            ``resource.list()`` call.
+
+    Yields:
+        dict: A GCP configuration record.
+
+    """
+    try:
+        request = resource.list(**list_kwargs)
+        while request is not None:
+            response = request.execute()
+            for item in response.get(key, []):
+                yield item
+            request = resource.list_next(previous_request=request,
+                                         previous_response=response)
+    except Exception as e:
+        _log.error('Failed to fetch resource list; key: %s; '
+                   'list_kwargs: %s; key_file_path: %s; '
+                   'error: %s: %s', key, list_kwargs,
+                   key_file_path, type(e).__name__, e)
+
+
+def _get_normalized_firewall_rules(firewall_record, project_index,
+                                   project, key_file_path):
     """Split a firewall record into multiple firewall rules.
 
     A firewall record in GCP has a top-level key named either
@@ -293,6 +292,9 @@ def _get_normalized_firewall_rules(firewall_record):
 
     Arguments:
         firewall_record (dict): Firewall record generated by this plugin.
+        project_index (int): Project index (for logging only).
+        project (dict): GCP project object (for logging only).
+        key_file_path (str): Path to key file (for logging only).
 
     Yield:
         dict: A normalized firewall rule record with ``com`` bucket
@@ -301,27 +303,40 @@ def _get_normalized_firewall_rules(firewall_record):
     """
     allow_rules = firewall_record.get('raw', {}).get('allowed')
     if allow_rules is not None:
-        for rule in allow_rules:
+        for rule_index, rule in enumerate(allow_rules):
             firewall_rule = _get_normalized_firewall_rule(firewall_record,
-                                                          rule)
+                                                          rule_index,
+                                                          rule,
+                                                          project_index,
+                                                          project,
+                                                          key_file_path)
             firewall_rule['com']['access'] = 'allow'
             yield firewall_rule
 
     deny_rules = firewall_record.get('raw', {}).get('denied')
     if deny_rules is not None:
-        for rule in deny_rules:
+        for rule_index, rule in enumerate(deny_rules):
             firewall_rule = _get_normalized_firewall_rule(firewall_record,
-                                                          rule)
+                                                          rule_index,
+                                                          rule,
+                                                          project_index,
+                                                          project,
+                                                          key_file_path)
             firewall_rule['com']['access'] = 'deny'
             yield firewall_rule
 
 
-def _get_normalized_firewall_rule(firewall_record, rule):
+def _get_normalized_firewall_rule(firewall_record, rule_index, rule,
+                                  project_index, project, key_file_path):
     """Create a normalized firewall rule record.
 
     Arguments:
         firewall_record (dict): Firewall record generated by this plugin.
+        rule_index (int): Index of a firewall rule (for logging only).
         rule (dict): Raw allowed or denied rule in ``firewall``.
+        project_index (int): Project index (for logging only).
+        project (dict): GCP project object (for logging only).
+        key_file_path (str): Path to key file (for logging only).
 
     Returns:
         dict: A normalized firewall rule record with ``com`` bucket
@@ -361,6 +376,11 @@ def _get_normalized_firewall_rule(firewall_record, rule):
             'destination_ports': rule.get('ports', ['0-65535'])
         }
     }
+
+    _log.info('Found firewall_rule #%d; %s, %s; %s', rule_index,
+              raw_firewall.get('name'), rule.get('IPProtocol'),
+              util.outline_gcp_project(project_index, project, None,
+                                       key_file_path))
     return record
 
 
