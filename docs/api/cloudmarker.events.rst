@@ -9,6 +9,14 @@ cloudmarker.events package
 Submodules
 ----------
 
+cloudmarker.events.azsqldatabasedisabledtdeevent module
+-------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azsqldatabasedisabledtdeevent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cloudmarker.events.azvmdatadiskencryptionevent module
 -----------------------------------------------------
 
@@ -37,6 +45,14 @@ cloudmarker.events.mockevent module
 -----------------------------------
 
 .. automodule:: cloudmarker.events.mockevent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cloudmarker.events.rdbmsenforcetlsevent module
+----------------------------------------------
+
+.. automodule:: cloudmarker.events.rdbmsenforcetlsevent
     :members:
     :undoc-members:
     :show-inheritance:

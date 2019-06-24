@@ -4,6 +4,7 @@ azure-mgmt-rdbms
 azure-mgmt-resource
 azure-mgmt-storage
 azure-mgmt-web
+azure-mgmt-sql
 elasticsearch
 google-api-python-client
 pymongo
