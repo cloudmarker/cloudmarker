@@ -14,6 +14,7 @@ from azure.mgmt.rdbms.mysql import MySQLManagementClient
 from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.web import WebSiteManagementClient
 
 from cloudmarker import ioworkers, util
 
@@ -88,16 +89,16 @@ class AzCloud:
             record_types = ('virtual_machine', 'app_gateway', 'lb', 'nic',
                             'nsg', 'public_ip', 'storage_account',
                             'resource_group', 'mysql_server',
-                            'postgresql_server')
+                            'postgresql_server', 'web_apps')
 
             tenant = self._tenant
             for sub_index, sub in enumerate(sub_list):
                 sub = sub.as_dict()
                 _log.info('Found %s', util.outline_az_sub(sub_index,
                                                           sub, tenant))
-
                 # Each record type for each subscription is a unit of
                 # work that would be fed to _get_resources().
+
                 for record_type in record_types:
                     yield (record_type, sub_index, sub)
 
@@ -206,6 +207,10 @@ def _get_resource_iterator(record_type, credentials,
     if record_type == 'postgresql_server':
         client = PostgreSQLManagementClient(credentials, sub_id)
         return client.servers.list()
+
+    if record_type == 'web_apps':
+        client = WebSiteManagementClient(credentials, sub_id)
+        return client.web_apps.list()
 
     # If control reaches here, there is a bug in this plugin. It means
     # there is a value in record_types variable in _get_subscriptions
