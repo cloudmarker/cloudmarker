@@ -41,6 +41,9 @@ plugins:
   rdbmsenforcetlsevent:
     plugin: cloudmarker.events.rdbmsenforcetlsevent.RDBMSEnforceTLSEvent
 
+  azsqldatabasetdeevent:
+    plugin: cloudmarker.events.azsqldatabasetdeevent.AzSQLDatabaseTDEEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
