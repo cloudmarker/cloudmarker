@@ -118,6 +118,7 @@ class GCPCloud:
                                               'projects', self._key_file_path)
 
             for project_index, project in enumerate(projects):
+                yield ('project', project_index, project)
                 project_id = project.get('projectId')
 
                 _log.info('Found %s',
@@ -162,6 +163,27 @@ class GCPCloud:
         _log.info('Working on %s list; %s', record_type,
                   util.outline_gcp_project(project_index, project, zone,
                                            self._key_file_path))
+
+        if record_type == 'project':
+            record = {
+                'raw': project,
+                'ext': {
+                    'cloud_type': 'gcp',
+                    'record_type': record_type,
+                    'project_id': project.get('projectId'),
+                    'project_name': project.get('name'),
+                    'zone': zone,
+                    'key_file_path': self._key_file_path,
+                    'client_email': self._client_email
+                },
+                'com': {
+                    'cloud_type': 'gcp',
+                    'record_type': record_type
+                }
+            }
+
+            yield record
+            return
 
         project_id = project.get('projectId')
         try:
