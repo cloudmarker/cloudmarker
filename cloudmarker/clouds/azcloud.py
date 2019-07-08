@@ -90,7 +90,7 @@ class AzCloud:
             record_types = ('virtual_machine', 'app_gateway', 'lb', 'nic',
                             'nsg', 'public_ip', 'storage_account',
                             'resource_group', 'mysql_server',
-                            'postgresql_server', 'web_apps')
+                            'postgresql_server', 'web_apps', 'subscription')
 
             tenant = self._tenant
             for sub_index, sub in enumerate(sub_list):
@@ -131,6 +131,25 @@ class AzCloud:
         """
         _log.info('Working on %s list; %s', record_type,
                   util.outline_az_sub(sub_index, sub, self._tenant))
+
+        if record_type == 'subscription':
+            record = {
+                'raw': sub,
+                'ext': {
+                    'cloud_type': 'azure',
+                    'record_type': record_type,
+                    'subscription_id': sub.get('subscription_id'),
+                    'subscription_name': sub.get('display_name'),
+                    'subscription_state': sub.get('state'),
+                },
+                'com': {
+                    'cloud_type': 'azure',
+                    'record_type': 'subscription'
+                }
+            }
+
+            yield record
+            return
 
         try:
             iterator = \
