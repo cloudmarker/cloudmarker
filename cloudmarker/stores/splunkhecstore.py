@@ -22,6 +22,7 @@ class SplunkHECStore:
             of host in URI, or False to disable verification
           buffer_size (int): Maximum number of records to hold in
             in-memory buffer for each record type.
+
         """
         self._uri = uri
         self._token = token

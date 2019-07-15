@@ -42,6 +42,7 @@ class GCPCloud:
             threads (int): Number of threads to launch in each process.
             _max_projects (int): Maximum number of projects to fetch
                 data for if the value is greater than 0.
+
         """
         self._key_file_path = key_file_path
         self._processes = processes
@@ -253,6 +254,7 @@ def _get_resource_iterator(resource, key, key_file_path, **list_kwargs):
         resource (Resource): GCP resource object.
         key (str): The key that we need to look up in the GCP
             response JSON to find the list of resources.
+        key_file_path (str): Path to key file (for logging only).
         list_kwargs (dict): Keyword arguments for
             ``resource.list()`` call.
 

@@ -22,6 +22,7 @@ class EmailAlert:
         argument is provided, it is ignored by this class because this
         class defines its own content from the event records it receives
         in its :meth:`write` method.
+
         """
         self._kwargs = kwargs
         self._buffer = []
@@ -31,6 +32,7 @@ class EmailAlert:
 
         Arguments:
             record (dict): An event record.
+
         """
         for _, value in record.items():
             self._buffer.append(repr(value))

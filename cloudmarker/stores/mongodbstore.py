@@ -29,6 +29,7 @@ class MongoDBStore:
             username (str): username for the database
             password (str): password for username to authenticate with the db
             buffer_size (int): maximum number of records to buffer
+
         """
         self._client = MongoClient(
             host=host,

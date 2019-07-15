@@ -194,7 +194,9 @@ def wrap_paragraphs(text, width=70):
     Finally, each paragraph is wrapped to the specified ``width``.
 
     Arguments:
+        text (str): String containing paragraphs to be wrapped.
         width (int): Maximum length of wrapped lines.
+
     """
     # Remove any common leading indentation from all lines.
     text = textwrap.dedent(text).strip()
@@ -388,10 +390,12 @@ def friendly_list(items, conjunction='and'):
 
     Arguments:
         items (list): List of items.
+        conjunction (str): Conjunction to be used before the last item
+            in the list; ``'and'`` by default.
 
     Returns:
         str: Human-friendly list of items with correct placement of
-            comma and conjunction.
+        comma and conjunction.
 
     """
     if not items:
@@ -544,6 +548,7 @@ def send_email(from_addr, to_addrs, subject, content,
             ``0`` (the default) or ``False`` to disable debugging. Set
             to ``1`` or ``True`` to see SMTP messages. Set to ``2`` to
             see timestamped SMTP messages.
+
     """
     log_data = ('from_addr: {}; to_addrs: {}; subject: {}; host: {}; '
                 'port: {}; ssl_mode: {}'

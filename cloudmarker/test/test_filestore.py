@@ -15,6 +15,7 @@ def write_to_file(filename):
 
     Arguments:
         filename (str): the file location where dummy data has to be written
+
     """
     # Initialize the FileStore plugin with the filename
     store = filestore.FileStore(filename)

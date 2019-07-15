@@ -37,6 +37,7 @@ class AzVM:
                 data for if the value is greater than 0.
             _max_recs (int): Maximum number of virtual machines records
                 to fetch for each subscription.
+
         """
         self._credentials = ServicePrincipalCredentials(
             tenant=tenant,

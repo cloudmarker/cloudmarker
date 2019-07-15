@@ -38,6 +38,7 @@ class AzSQL:
                 data for if the value is greater than 0.
             _max_recs (int): Maximum number of SQL server records
                 to fetch for each subscription.
+
         """
         self._credentials = ServicePrincipalCredentials(
             tenant=tenant,

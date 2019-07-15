@@ -34,6 +34,7 @@ def cloud_worker(audit_key, audit_version, plugin_key, plugin_config,
         plugin_config (dict): Cloud plugin config dictionary.
         output_queues (list): List of :class:`multiprocessing.Queue`
             objects to write records to.
+
     """
     worker_name = audit_key + '_' + plugin_key
     _log.info('cloud_worker: %s: Started', worker_name)
@@ -89,6 +90,7 @@ def event_worker(audit_key, audit_version, plugin_key, plugin_config,
         input_queue (multiprocessing.Queue): Queue to read records from.
         output_queues (list): List of :class:`multiprocessing.Queue`
             objects to write records to.
+
     """
     worker_name = audit_key + '_' + plugin_key
     _log.info('event_worker: %s: Started', worker_name)
@@ -154,6 +156,7 @@ def store_worker(audit_key, audit_version, plugin_key, plugin_config,
         plugin_key (str): Plugin key name in configuration.
         plugin_config (dict): Store plugin config dictionary.
         input_queue (multiprocessing.Queue): Queue to read records from.
+
     """
     _write_worker(audit_key, audit_version, plugin_key, plugin_config,
                   input_queue, 'store')
@@ -172,6 +175,7 @@ def alert_worker(audit_key, audit_version, plugin_key, plugin_config,
         plugin_key (str): Plugin key name in configuration.
         plugin_config (dict): Alert plugin config dictionary.
         input_queue (multiprocessing.Queue): Queue to read records from.
+
     """
     _write_worker(audit_key, audit_version, plugin_key, plugin_config,
                   input_queue, 'alert')
@@ -186,7 +190,9 @@ def _write_worker(audit_key, audit_version, plugin_key, plugin_config,
         audit_version (str): Audit version string.
         plugin_key (str): Plugin key name in configuration.
         plugin_config (dict): Store or alert plugin config dictionary.
+        input_queue (multiprocessing.Queue): Queue to read records from.
         worker_type (str): Either ``'store'`` or ``'alert'``.
+
     """
     worker_name = audit_key + '_' + plugin_key
     _log.info('%s_worker: %s: Started', worker_type, worker_name)

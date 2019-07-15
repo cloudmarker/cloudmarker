@@ -43,6 +43,7 @@ class AzCloud:
                 data for if the value is greater than 0.
             _max_recs (int): Maximum number of records of each type to
                 fetch under each subscription.
+
         """
         self._credentials = ServicePrincipalCredentials(
             tenant=tenant,
@@ -228,7 +229,7 @@ def _get_record(iterator, azure_record_type, max_recs,
         iterator: An iterator like instance of
             :class:`msrest.serialization.Model` objects.
         azure_record_type (str): Type of record as per Azure vocabulary.
-        _max_recs (int): Maximum number of records to fetch.
+        max_recs (int): Maximum number of records to fetch.
         sub_index (int): Subscription index (for logging only).
         sub (Subscription): Azure subscription model object.
         tenant (str): Azure tenant ID (for logging only).

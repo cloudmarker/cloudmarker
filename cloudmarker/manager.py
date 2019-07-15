@@ -69,6 +69,7 @@ def _run(config):
 
     Arguments:
         config (dict): Configuration dictionary.
+
     """
     start_time = time.localtime()
     _send_email(config.get('email'), 'all audits', start_time)
@@ -117,6 +118,7 @@ class Audit:
                 entire configuration dictionary that contains
                 top-level keys named ``clouds``, ``stores``, ``events``,
                 ``alerts``, ``audits``, ``run``, etc.
+
         """
         self._start_time = time.localtime()
         self._audit_key = audit_key
@@ -278,6 +280,7 @@ def _send_email(email_config, about, start_time, end_time=None):
         end_time (time.struct_time): End time of job or audit. This
             argument must not be specified if the job or audit is
             starting.
+
     """
     state = 'starting' if end_time is None else 'ending'
     if email_config is None:
