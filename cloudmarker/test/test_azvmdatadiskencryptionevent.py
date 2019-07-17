@@ -48,25 +48,18 @@ base_unencrypted_data_disk = {
 
 
 class AzAzVMDataDiskEncryptionEventTest(unittest.TestCase):
-    """Tests for AzAzVMDataDiskEncryptionEventTest plugin."""
-
-    def test_com_bucket_missing(self):
-        record = copy.deepcopy(base_record)
-        record['com'] = None
-        plugin = azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent()
-        events = list(plugin.eval(record))
-        self.assertEqual(events, [])
-
-    def test_record_type_non_compute(self):
-        record = copy.deepcopy(base_record)
-        record['com']['record_type'] = 'non_compute'
-        plugin = azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent()
-        events = list(plugin.eval(record))
-        self.assertEqual(events, [])
+    """Tests for AzVMDataDiskEncryptionEvent plugin."""
 
     def test_ext_bucket_missing(self):
         record = copy.deepcopy(base_record)
         record['ext'] = None
+        plugin = azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent()
+        events = list(plugin.eval(record))
+        self.assertEqual(events, [])
+
+    def test_record_type_non_vm_instance_view(self):
+        record = copy.deepcopy(base_record)
+        record['ext']['record_type'] = 'non_vm_instance_view'
         plugin = azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent()
         events = list(plugin.eval(record))
         self.assertEqual(events, [])
@@ -82,6 +75,14 @@ class AzAzVMDataDiskEncryptionEventTest(unittest.TestCase):
 
     def test_all_data_disks_encrypted(self):
         record = copy.deepcopy(base_record)
+        plugin = azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent()
+        events = list(plugin.eval(record))
+        self.assertEqual(events, [])
+
+    def test_com_bucket_missing(self):
+        record = copy.deepcopy(base_record)
+        record['ext']['all_data_disks_encrypted'] = False
+        record['com'] = None
         plugin = azvmdatadiskencryptionevent.AzVMDataDiskEncryptionEvent()
         events = list(plugin.eval(record))
         self.assertEqual(events, [])

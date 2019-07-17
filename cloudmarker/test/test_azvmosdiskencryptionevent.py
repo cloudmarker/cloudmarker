@@ -26,21 +26,7 @@ base_raw_bucket = {
 
 
 class AzVMOSDiskEncryptionEventTest(unittest.TestCase):
-    """Tests for AzVMOSDiskEncryptionEventTest plugin."""
-
-    def test_com_bucket_missing(self):
-        record = copy.deepcopy(base_record)
-        record['com'] = None
-        plugin = azvmosdiskencryptionevent.AzVMOSDiskEncryptionEvent()
-        events = list(plugin.eval(record))
-        self.assertEqual(events, [])
-
-    def test_record_type_non_compute(self):
-        record = copy.deepcopy(base_record)
-        record['com']['record_type'] = 'non_compute'
-        plugin = azvmosdiskencryptionevent.AzVMOSDiskEncryptionEvent()
-        events = list(plugin.eval(record))
-        self.assertEqual(events, [])
+    """Tests for AzVMOSDiskEncryptionEvent plugin."""
 
     def test_ext_bucket_missing(self):
         record = copy.deepcopy(base_record)
@@ -49,8 +35,23 @@ class AzVMOSDiskEncryptionEventTest(unittest.TestCase):
         events = list(plugin.eval(record))
         self.assertEqual(events, [])
 
+    def test_record_type_non_vm_instance_view(self):
+        record = copy.deepcopy(base_record)
+        record['ext']['record_type'] = 'non_vm_instance_view'
+        plugin = azvmosdiskencryptionevent.AzVMOSDiskEncryptionEvent()
+        events = list(plugin.eval(record))
+        self.assertEqual(events, [])
+
     def test_os_disk_encrypted(self):
         record = copy.deepcopy(base_record)
+        plugin = azvmosdiskencryptionevent.AzVMOSDiskEncryptionEvent()
+        events = list(plugin.eval(record))
+        self.assertEqual(events, [])
+
+    def test_com_bucket_missing(self):
+        record = copy.deepcopy(base_record)
+        record['ext']['os_disk_encrypted'] = False
+        record['com'] = None
         plugin = azvmosdiskencryptionevent.AzVMOSDiskEncryptionEvent()
         events = list(plugin.eval(record))
         self.assertEqual(events, [])
