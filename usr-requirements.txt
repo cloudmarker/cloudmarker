@@ -1,4 +1,5 @@
 azure-mgmt-compute
+azure-mgmt-monitor
 azure-mgmt-network
 azure-mgmt-rdbms
 azure-mgmt-resource
