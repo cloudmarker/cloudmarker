@@ -596,7 +596,7 @@ Follow these steps to get started with auditing a GCP cloud environment.
      `built-in base config`_.
 
 Note that the ``GCPCloud`` plugin audits all the projects under the
-``service-account`` for the ``keyfile.json`` provided and also discovers
+service-account for the ``keyfile.json`` provided and also discovers
 resources in all zones automatically.
 
 MockCloud
