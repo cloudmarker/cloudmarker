@@ -9,6 +9,14 @@ cloudmarker.events package
 Submodules
 ----------
 
+cloudmarker.events.azlogprofilemissingcategoryevent module
+----------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azlogprofilemissingcategoryevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azsqldatabasetdeevent module
 -----------------------------------------------
 
