@@ -92,6 +92,13 @@ class AzMonitor:
                 # Each record type for each subscription is a unit of
                 # work that would be fed to _get_resources().
                 for attribute_type in monitor_attributes:
+                    if attribute_type == 'log_profile':
+                        sub['locations'] = list()
+                        locations = sub_client.subscriptions. \
+                            list_locations(sub.get('subscription_id'))
+                        for location in locations:
+                            sub['locations'].append(location.as_dict()
+                                                    .get('name'))
                     yield (attribute_type, sub_index, sub)
 
                 # Break after pulling data for self._max_subs number of
@@ -225,6 +232,10 @@ def _get_record(iterator, attribute_type, max_recs,
                 'reference': raw_record.get('id'),
             }
         })
+        if 'locations' in sub:
+            record['ext']['subscription_locations'] = sub.get('locations')
+        if attribute_type == 'log_profile':
+            record['ext']['locations'] = raw_record.get('locations')
 
         # We have found at least one record, so we set this flag to False.
         records_missing = False

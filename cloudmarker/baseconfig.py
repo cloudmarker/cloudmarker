@@ -68,6 +68,9 @@ plugins:
   azkvnonrecoverableevent:
     plugin: cloudmarker.events.azkvnonrecoverableevent.AzKVNonRecoverableEvent
 
+  azlogprofilemissinglocationevent:
+    plugin:cloudmarker.events.azlogprofilemissingcategoryevent.AzLogProfileLocationCategoryEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
