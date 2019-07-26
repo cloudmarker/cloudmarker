@@ -209,9 +209,18 @@ def _get_record(iterator, attribute_type, max_recs,
         _log.info('Found %s #%d: %s; %s', attribute_type, i,
                   raw_record.get('name'),
                   util.outline_az_sub(sub_index, sub, tenant))
-
+        retention_policy = raw_record.get('retention_policy')
         record = util.merge_dicts(base_record, {
             'raw': raw_record,
+            'ext': {
+                'cloud_type': 'azure',
+                'record_type': attribute_type,
+                'subscription_id': sub.get('subscription_id'),
+                'subscription_name': sub.get('display_name'),
+                'subscription_state': sub.get('state'),
+                'retention_enabled': retention_policy.get('enabled'),
+                'retention_days': retention_policy.get('days'),
+            },
             'com': {
                 'reference': raw_record.get('id'),
             }

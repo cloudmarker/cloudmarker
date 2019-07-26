@@ -12,17 +12,26 @@ base_sub_display_name = 'foo_display_name'
 
 base_sub_state = 'foo_state'
 
+base_retention_days = 365
+
+base_retention_enabled = True
+
 base_subscription_record = {
     'subscription_id': base_sub_id,
     'display_name': base_sub_display_name,
     'state': base_sub_state
 }
 
+base_retention_policy = {
+    'days': base_retention_days,
+    'enabled': base_retention_enabled,
+}
 base_log_profile_id = '/subscriptions/foo_sub_id/providers/\
                     microsoft.insights/logprofiles/foo_lp_name'
 
 base_log_profile = {
-    'id': base_log_profile_id
+    'id': base_log_profile_id,
+    'retention_policy': base_retention_policy,
 }
 
 
@@ -75,6 +84,10 @@ class AzSQLTest(unittest.TestCase):
         self.assertEqual(records[0]['ext']['subscription_id'], base_sub_id)
         self.assertEqual(records[0]['ext']['subscription_name'],
                          base_sub_display_name)
+        self.assertTrue(records[0]['ext']['retention_enabled'],
+                        base_retention_enabled)
+        self.assertEqual(records[0]['ext']['retention_days'],
+                         base_retention_days)
         self.assertEqual(records[0]['ext']['subscription_state'],
                          base_sub_state)
         self.assertEqual(records[0]['com']['cloud_type'], 'azure')

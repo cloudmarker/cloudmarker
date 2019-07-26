@@ -56,6 +56,9 @@ plugins:
   azstorageaccountsecuretransferevent:
     plugin: cloudmarker.events.azstorageaccountsecuretransferevent.AzStorageAccountSecureTransferEvent
 
+  azlogprofileretentionevent:
+    plugin: cloudmarker.events.azlogprofileretentionevent.AzLogProfileRetentionEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
