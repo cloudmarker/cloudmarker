@@ -205,6 +205,7 @@ def _process_app_config(app_index, app, app_config,
         'ext': {
             'cloud_type': 'azure',
             'record_type': 'web_app_config',
+            'https_only': app.get('https_only'),
             'min_tls_version': app_config.get('min_tls_version'),
             'subscription_id': sub.get('subscription_id'),
             'subscription_name': sub.get('display_name'),
