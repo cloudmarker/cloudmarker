@@ -47,6 +47,9 @@ plugins:
   azsqldatabasetdeevent:
     plugin: cloudmarker.events.azsqldatabasetdeevent.AzSQLDatabaseTDEEvent
 
+  azlogprofileevent:
+    plugin: cloudmarker.events.azlogprofileevent.AzLogProfileEvent
+
   azlogprofilemissingcategoryevent:
     plugin: cloudmarker.events.azlogprofilemissingcategoryevent.AzLogProfileMissingCategoryEvent
 

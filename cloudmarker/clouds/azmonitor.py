@@ -120,6 +120,8 @@ class AzMonitor:
             dict: An Azure monitor record.
 
         """
+        _log.info('Working on %s', util.outline_az_sub(sub_index, sub,
+                                                       self._tenant))
         try:
             monitor_client = \
                 MonitorManagementClient(self._credentials,
@@ -186,32 +188,58 @@ def _get_record(iterator, attribute_type, max_recs,
         dict: An Azure record of type ``attribute_type``.
 
     """
+    base_record = {
+        'ext': {
+            'cloud_type': 'azure',
+            'record_type': attribute_type,
+            'subscription_id': sub.get('subscription_id'),
+            'subscription_name': sub.get('display_name'),
+            'subscription_state': sub.get('state'),
+        },
+        'com': {
+            'cloud_type': 'azure',
+            'record_type': attribute_type,
+        }
+    }
+
+    records_missing = True
+
     for i, v in enumerate(iterator):
         raw_record = v.as_dict()
-        record = {
-            'raw': raw_record,
-            'ext': {
-                'cloud_type': 'azure',
-                'record_type': attribute_type,
-                'subscription_id': sub.get('subscription_id'),
-                'subscription_name': sub.get('display_name'),
-                'subscription_state': sub.get('state'),
-            },
-            'com': {
-                'cloud_type': 'azure',
-                'record_type': attribute_type,
-                'reference': raw_record.get('id'),
-            }
-        }
-
         _log.info('Found %s #%d: %s; %s', attribute_type, i,
                   raw_record.get('name'),
                   util.outline_az_sub(sub_index, sub, tenant))
 
-        yield record
-        if i + 1 == max_recs:
+        record = util.merge_dicts(base_record, {
+            'raw': raw_record,
+            'com': {
+                'reference': raw_record.get('id'),
+            }
+        })
 
+        # We have found at least one record, so we set this flag to False.
+        records_missing = False
+
+        yield record
+
+        if i + 1 == max_recs:
             _log.info('Stopping %s fetch due to _max_recs: %d; %s',
                       attribute_type, max_recs,
                       util.outline_az_sub(sub_index, sub, tenant))
             break
+
+    if records_missing:
+        _log.info('Missing %s; %s', attribute_type,
+                  util.outline_az_sub(sub_index, sub, tenant))
+
+        record = util.merge_dicts(base_record, {
+            'raw': None,
+            'ext': {
+                'record_type': attribute_type + '_missing',
+            },
+            'com': {
+                'record_type': attribute_type + '_missing',
+                'reference': sub.get('id'),
+            }
+        })
+        yield record
