@@ -53,6 +53,9 @@ plugins:
   azlogprofilemissingcategoryevent:
     plugin: cloudmarker.events.azlogprofilemissingcategoryevent.AzLogProfileMissingCategoryEvent
 
+  azstorageaccountevent:
+    plugin: cloudmarker.events.azstorageaccountevent.AzStorageAccountEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
