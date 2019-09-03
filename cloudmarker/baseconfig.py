@@ -63,7 +63,7 @@ plugins:
     plugin: cloudmarker.events.azkvsecretnoexpiryevent.AzKVSecretNoExpiryEvent
 
   azkeyvaultkeynoexpiryevent:
-    plugin: cloudmarker.events.azkeyvaultkeynoexpiryevent.AzKeyVaultKeyNoExpiryEvent
+    plugin: cloudmarker.events.azkvkeynoexpiryevent.AzKVKeyNoExpiryEvent
 
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
