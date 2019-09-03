@@ -286,11 +286,21 @@ def _get_normalized_key_vault_record(key_vault_record, sub):
 
     """
     raw_record = key_vault_record.as_dict()
+    enable_soft_delete = False
+    if raw_record['properties'].get('enable_soft_delete'):
+        enable_soft_delete = raw_record['properties'].get('enable_soft_delete')
+    enable_purge_protection = False
+    if raw_record['properties'].get('enable_purge_protection'):
+        enable_purge_protection = raw_record['properties']. \
+                                  get('enable_purge_protection')
     record = {
         'raw': raw_record,
         'ext': {
             'cloud_type': 'azure',
             'record_type': 'key_vault',
+            'enable_soft_delete': enable_soft_delete,
+            'enable_purge_protection': enable_purge_protection,
+            'recoverable': enable_purge_protection and enable_soft_delete,
             'subscription_id': sub.get('subscription_id'),
             'subscription_name': sub.get('display_name'),
             'subscription_state': sub.get('state'),
