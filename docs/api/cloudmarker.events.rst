@@ -33,6 +33,14 @@ cloudmarker.events.azsqldatabasetdeevent module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.events.azstorageaccountsecuretransferevent module
+-------------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azstorageaccountsecuretransferevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azvmdatadiskencryptionevent module
 -----------------------------------------------------
 

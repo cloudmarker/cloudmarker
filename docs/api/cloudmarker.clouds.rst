@@ -33,6 +33,14 @@ cloudmarker.clouds.azsql module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.clouds.azstorageaccount module
+------------------------------------------
+
+.. automodule:: cloudmarker.clouds.azstorageaccount
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.clouds.azvm module
 ------------------------------
 

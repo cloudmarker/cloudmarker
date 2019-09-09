@@ -1,10 +1,9 @@
 """Microsoft storage account secure transfer event.
 
-This module defines the :class:`AzStorageAccountEvent` class that identifies
-a storage account with secure transfer enabled  not set to true .
-This plugin works on the storage account properties record found in the
-``ext`` bucket of ``storage_account_properties`` records.
-
+This module defines the :class:`AzStorageAccountSecureTransferEvent`
+class that identifies a storage account with secure transfer enabled not
+set to true . This plugin works on the storage account properties record
+found in the ``ext`` bucket of ``storage_account_properties`` records.
 """
 
 
@@ -15,11 +14,11 @@ from cloudmarker import util
 _log = logging.getLogger(__name__)
 
 
-class AzStorageAccountEvent:
+class AzStorageAccountSecureTransferEvent:
     """Azure storage account secure transfer enabled check event plugin."""
 
     def __init__(self):
-        """Create an instance of :class:`AzStorageAccountEvent`."""
+        """Create instance of :class:`AzStorageAccountSecureTransferEvent`."""
 
     def eval(self, record):
         """Evaluate Azure storage account for insecure transfer enabled status.
@@ -37,9 +36,9 @@ class AzStorageAccountEvent:
         if ext.get('record_type') != 'storage_account_properties':
             return
 
-        sec_transf_required = ext.get('secure_transfer_required')
+        sec_transfer_required = ext.get('secure_transfer_required')
 
-        if sec_transf_required is False:
+        if sec_transfer_required is False:
             yield from _get_az_storage_account_secure_transfer_event(
                 com, ext)
 
@@ -52,16 +51,15 @@ class AzStorageAccountEvent:
 
 
 def _get_az_storage_account_secure_transfer_event(com, ext):
-    """Evaluate Azure storage account property for insecure transfer enabled.
+    """Evaluate Azure storage account to check if insecure transfer enabled.
 
     Arguments:
-        com (dict): Azure storage account record `com` bucket
-        ext (dict): Azure storage account record `ext` bucket
-        raw (dict): Azure storage account record `raw` bucket
+        com (dict): Azure storage account record `com` bucket.
+        ext (dict): Azure storage account record `ext` bucket.
 
     Returns:
-        dict: An event record representing storage accounts with  secure
-        transfer enabled set to false
+        dict: An event record representing storage accounts with secure
+        transfer enabled set to false.
 
     """
     friendly_cloud_type = util.friendly_string(com.get('cloud_type'))
@@ -81,16 +79,17 @@ def _get_az_storage_account_secure_transfer_event(com, ext):
         # record because they provide useful context to
         # locate the storage account that led to the event.
         'ext': util.merge_dicts(ext, {
-            'record_type': 'storage_account_event'
+            'record_type': 'storage_account_secure_transfer_event'
         }),
         'com': {
             'cloud_type': com.get('cloud_type'),
-            'record_type': 'storage_account_event',
+            'record_type': 'storage_account_secure_transfer_event',
             'reference': reference,
             'description': description,
             'recommendation': recommendation,
         }
     }
-    _log.info('Generating storage_account_event; %r',
+
+    _log.info('Generating storage_account_secure_transfer_event; %r',
               event_record)
     yield event_record

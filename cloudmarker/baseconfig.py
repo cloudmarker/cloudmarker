@@ -53,8 +53,8 @@ plugins:
   azlogprofilemissingcategoryevent:
     plugin: cloudmarker.events.azlogprofilemissingcategoryevent.AzLogProfileMissingCategoryEvent
 
-  azstorageaccountevent:
-    plugin: cloudmarker.events.azstorageaccountevent.AzStorageAccountEvent
+  azstorageaccountsecuretransferevent:
+    plugin: cloudmarker.events.azstorageaccountsecuretransferevent.AzStorageAccountSecureTransferEvent
 
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
