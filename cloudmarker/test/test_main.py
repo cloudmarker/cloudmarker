@@ -1,6 +1,7 @@
 """Tests for package execution."""
 
 
+import importlib
 import unittest
 from unittest import mock
 
@@ -12,5 +13,5 @@ class MainTest(unittest.TestCase):
     def test_main(self):
         # Run cloudmarker package with only the default base
         # configuration and ensure that it runs without issues.
-        import cloudmarker.__main__
-        self.assertEqual(type(cloudmarker.__main__).__name__, 'module')
+        module = importlib.import_module('cloudmarker.__main__')
+        self.assertEqual(type(module).__name__, 'module')
