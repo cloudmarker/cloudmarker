@@ -9,6 +9,30 @@ cloudmarker.events package
 Submodules
 ----------
 
+cloudmarker.events.azkvkeynoexpiryevent module
+----------------------------------------------
+
+.. automodule:: cloudmarker.events.azkvkeynoexpiryevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azkvnonrecoverableevent module
+-------------------------------------------------
+
+.. automodule:: cloudmarker.events.azkvnonrecoverableevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azkvsecretnoexpiryevent module
+-------------------------------------------------
+
+.. automodule:: cloudmarker.events.azkvsecretnoexpiryevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azlogprofileevent module
 -------------------------------------------
 
@@ -21,6 +45,22 @@ cloudmarker.events.azlogprofilemissingcategoryevent module
 ----------------------------------------------------------
 
 .. automodule:: cloudmarker.events.azlogprofilemissingcategoryevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azlogprofilemissinglocationevent module
+----------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azlogprofilemissinglocationevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azlogprofileretentionevent module
+----------------------------------------------------
+
+.. automodule:: cloudmarker.events.azlogprofileretentionevent
    :members:
    :undoc-members:
    :show-inheritance:
