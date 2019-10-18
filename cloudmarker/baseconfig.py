@@ -69,7 +69,7 @@ plugins:
     plugin: cloudmarker.events.azkvnonrecoverableevent.AzKVNonRecoverableEvent
 
   azlogprofilemissinglocationevent:
-    plugin:cloudmarker.events.azlogprofilemissingcategoryevent.AzLogProfileLocationCategoryEvent
+    plugin: arachnoid.events.azlogprofilemissinglocationevent.AzLogProfileMissingLocationEvent
 
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent

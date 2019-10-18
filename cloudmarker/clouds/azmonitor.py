@@ -93,7 +93,7 @@ class AzMonitor:
                 # work that would be fed to _get_resources().
                 for attribute_type in monitor_attributes:
                     if attribute_type == 'log_profile':
-                        sub['locations'] = list()
+                        sub['locations'] = []
                         locations = sub_client.subscriptions. \
                             list_locations(sub.get('subscription_id'))
                         for location in locations:
@@ -233,8 +233,10 @@ def _get_record(iterator, attribute_type, max_recs,
             }
         })
         if 'locations' in sub:
+            # Record the locations in which the subscription exists.
             record['ext']['subscription_locations'] = sub.get('locations')
         if attribute_type == 'log_profile':
+            # Record the locations in which the log profile is enabled.
             record['ext']['locations'] = raw_record.get('locations')
 
         # We have found at least one record, so we set this flag to False.

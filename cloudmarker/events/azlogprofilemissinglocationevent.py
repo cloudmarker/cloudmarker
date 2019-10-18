@@ -73,7 +73,7 @@ def _evaluate_log_profile_for_location(com, ext):
     """
     available_locations = set(ext.get('subscription_locations'))
     available_locations.add('global')
-    missing_locations = available_locations - set(ext.get('locations'))
+    missing_locations = list(available_locations - set(ext.get('locations')))
     if not missing_locations:
         return
     yield _get_log_profile_missing_location_event(com, ext, missing_locations)
