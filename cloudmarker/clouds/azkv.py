@@ -138,7 +138,7 @@ class AzKV:
                 key_vault = key_vault.as_dict()
                 key_vault_name = key_vault.get('name')
                 key_vault_id = key_vault.get('id')
-                _log.info('Found Key Vault #%d: %s; %s',
+                _log.info('Found key_vault #%d: %s; %s',
                           key_vault_index, key_vault_name,
                           util.outline_az_sub(sub_index, sub, tenant))
                 rg_name = \
@@ -182,7 +182,7 @@ class AzKV:
             token = credentials.token
             return token['token_type'], token['access_token']
 
-        _log.info('Working on Key Vault #%d: %s; %s', key_vault_index,
+        _log.info('Working on key_vault #%d: %s; %s', key_vault_index,
                   key_vault_name, util.outline_az_sub(sub_index, sub,
                                                       self._tenant))
         subscription_id = sub.get('subscription_id')
@@ -205,9 +205,9 @@ class AzKV:
             # Retrieve data using each iterator.
             for record in itertools.chain(
                     _get_data_record(secrets, 'key_vault_secret',
-                                     sub),
+                                     sub_index, sub, self._tenant),
                     _get_data_record(keys, 'key_vault_key',
-                                     sub),
+                                     sub_index, sub, self._tenant),
             ):
                 yield record
 
@@ -222,20 +222,22 @@ class AzKV:
                   self._tenant, self._processes, self._threads)
 
 
-def _get_data_record(iterator, azure_record_type, sub):
+def _get_data_record(iterator, azure_record_type, sub_index, sub,
+                     tenant):
     """Normalize the Key Vault data plane record.
 
     Arguments:
         iterator: An iterator like instance of
             :class:`msrest.serialization.Model` objects.
         azure_record_type (str): Record type name.
+        sub_index (int): Subscription index (for logging only).
         sub (Subscription): Azure subscription object.
+        tenant (str): Azure tenant ID (for logging only).
 
     Returns:
         dict: Normalized Key Vault data plane record.
 
     """
-    subscription_id = sub.get('subscription_id')
     try:
         for i, v in enumerate(iterator):
             raw_record = v.as_dict()
@@ -263,15 +265,15 @@ def _get_data_record(iterator, azure_record_type, sub):
                 }
             }
 
-            _log.info('Found %s #%d; subscription_id: %s; name: %s',
-                      azure_record_type, i, sub.get('subscription_id'),
-                      reference)
+            _log.info('Found %s #%d: %s; %s', azure_record_type, i, reference,
+                      util.outline_az_sub(sub_index, sub, tenant))
             yield record
 
     except KeyVaultErrorException as e:
-        _log.error('Failed to fetch details for key_vault; '
-                   'subscription_id: %s; error: %s: %s',
-                   subscription_id, type(e).__name__, e)
+        _log.error('Failed to fetch details for %s; %s; error: %s: %s',
+                   azure_record_type,
+                   util.outline_az_sub(sub_index, sub, tenant),
+                   type(e).__name__, e)
 
 
 def _get_normalized_key_vault_record(key_vault_record, sub):
