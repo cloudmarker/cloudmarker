@@ -4,6 +4,8 @@
 import unittest
 from unittest import mock
 
+from pymongo import errors
+
 from cloudmarker.stores import mongodbstore
 
 
@@ -57,7 +59,6 @@ class MongoDBStoreTest(unittest.TestCase):
 
     @mock.patch('cloudmarker.stores.mongodbstore.MongoClient')
     def test_bulk_write_error(self, mock_client):
-        from pymongo import errors
 
         # Configure the mock client such that it raises BulkWriteError
         # on insertion of records.
