@@ -33,6 +33,14 @@ cloudmarker.clouds.azmonitor module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.clouds.azpostgres module
+------------------------------------
+
+.. automodule:: cloudmarker.clouds.azpostgres
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.clouds.azsql module
 -------------------------------
 
