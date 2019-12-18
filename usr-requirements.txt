@@ -1,6 +1,6 @@
-azure-keyvault
+azure-keyvault==1.1.0
 azure-mgmt-compute
-azure-mgmt-keyvault
+azure-mgmt-keyvault==2.0.0
 azure-mgmt-monitor
 azure-mgmt-network
 azure-mgmt-rdbms
