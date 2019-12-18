@@ -34,6 +34,8 @@ class AzStorageAccount:
             tenant (str): Azure subscription tenant ID.
             client (str): Azure service principal application ID.
             secret (str): Azure service principal password.
+            processes (int): Number of worker processes to run.
+            threads (int): Number of worker threads to run.
             _max_subs (int): Maximum number of subscriptions to fetch
                 data for if the value is greater than 0.
             _max_recs (int): Maximum number of storage accounts records
