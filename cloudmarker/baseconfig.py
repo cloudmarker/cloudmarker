@@ -71,6 +71,9 @@ plugins:
   azlogprofilemissinglocationevent:
     plugin: arachnoid.events.azlogprofilemissinglocationevent.AzLogProfileMissingLocationEvent
 
+  azpostgreslogcheckpointsevent:
+    plugin: cloudmarker.events.azpostgreslogcheckpointsevent.AzPostgresLogCheckpointsEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
