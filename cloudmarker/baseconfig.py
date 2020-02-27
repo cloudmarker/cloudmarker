@@ -80,6 +80,9 @@ plugins:
   azpostgreslogdisconnectionsevent:
     plugin: cloudmarker.events.azpostgreslogdisconnectionsevent.AzPostgresLogDisconnectionsEvent
 
+  azpostgreslogdurationevent:
+    plugin: cloudmarker.events.azpostgreslogdurationevent.AzPostgresLogDurationEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
