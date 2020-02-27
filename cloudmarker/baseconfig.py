@@ -74,6 +74,9 @@ plugins:
   azpostgreslogcheckpointsevent:
     plugin: cloudmarker.events.azpostgreslogcheckpointsevent.AzPostgresLogCheckpointsEvent
 
+  azpostgreslogconnectionsevent:
+    plugin: cloudmarker.events.azpostgreslogconnectionsevent.AzPostgresLogConnectionsEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 

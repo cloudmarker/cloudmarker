@@ -73,6 +73,14 @@ cloudmarker.events.azpostgreslogcheckpointsevent module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.events.azpostgreslogconnectionsevent module
+-------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azpostgreslogconnectionsevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azsqldatabasetdeevent module
 -----------------------------------------------
 
