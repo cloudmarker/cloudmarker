@@ -81,6 +81,14 @@ cloudmarker.events.azpostgreslogconnectionsevent module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.events.azpostgreslogdisconnectionsevent module
+----------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azpostgreslogdisconnectionsevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azsqldatabasetdeevent module
 -----------------------------------------------
 
