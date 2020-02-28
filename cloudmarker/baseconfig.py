@@ -83,6 +83,9 @@ plugins:
   azpostgreslogdurationevent:
     plugin: cloudmarker.events.azpostgreslogdurationevent.AzPostgresLogDurationEvent
 
+  azpostgresconnectionthrottlingevent:
+    plugin: cloudmarker.events.azpostgresconnectionthrottlingevent.AzPostgresConnectionThrottlingEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 

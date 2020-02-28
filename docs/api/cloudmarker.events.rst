@@ -97,6 +97,14 @@ cloudmarker.events.azpostgreslogdurationevent module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.events.azpostgresconnectionthrottlingevent module
+-------------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azpostgresconnectionthrottlingevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azsqldatabasetdeevent module
 -----------------------------------------------
 
