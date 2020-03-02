@@ -209,6 +209,9 @@ def _process_storage_account_properties(storage_account_index,
 
     """
     storage_account['properties'] = storage_account_properties
+    default_network_access_allowed = True
+    if storage_account['network_rule_set'].get('default_action') != 'Allow':
+        default_network_access_allowed = False
     record = {
         'raw': storage_account,
         'ext': {
@@ -217,6 +220,7 @@ def _process_storage_account_properties(storage_account_index,
             'secure_transfer_required': storage_account_properties.get(
                 'enable_https_traffic_only'
             ),
+            'default_network_access_allowed': default_network_access_allowed,
             'subscription_id': sub.get('subscription_id'),
             'subscription_name': sub.get('display_name'),
             'subscription_state': sub.get('state'),
