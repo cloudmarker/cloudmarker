@@ -212,6 +212,13 @@ def _process_storage_account_properties(storage_account_index,
     default_network_access_allowed = True
     if storage_account['network_rule_set'].get('default_action') != 'Allow':
         default_network_access_allowed = False
+    # Azure services is an umbrella term for trusted Microsoft Azure services
+    # including Azure Backup, Azure Site Recovery, Azure DevTest Labs,
+    # Azure Event Grid, Azure Event Hubs, Azure Networking, Azure Monitor and
+    # Azure SQL Data Warehouse
+    bypass_trusted_services = True
+    if storage_account['network_rule_set'].get('bypass') != 'AzureServices':
+        bypass_trusted_services = False
     record = {
         'raw': storage_account,
         'ext': {
@@ -221,6 +228,7 @@ def _process_storage_account_properties(storage_account_index,
                 'enable_https_traffic_only'
             ),
             'default_network_access_allowed': default_network_access_allowed,
+            'trusted_services_allowed': bypass_trusted_services,
             'subscription_id': sub.get('subscription_id'),
             'subscription_name': sub.get('display_name'),
             'subscription_state': sub.get('state'),
