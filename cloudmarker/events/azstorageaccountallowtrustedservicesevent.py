@@ -33,7 +33,14 @@ class AzStorageAccountAllowTrustedServicesEvent:
 
         """
         com = record.get('com')
+        com = record.get('com', {})
+        if com is None:
+            return
+        if com.get('cloud_type') != 'azure':
+            return
         ext = record.get('ext')
+        if ext is None:
+            return
         if ext.get('record_type') != 'storage_account_properties':
             return
 
