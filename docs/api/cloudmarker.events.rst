@@ -65,6 +65,14 @@ cloudmarker.events.azlogprofileretentionevent module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.events.azpostgresconnectionthrottlingevent module
+-------------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azpostgresconnectionthrottlingevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azpostgreslogcheckpointsevent module
 -------------------------------------------------------
 
@@ -97,14 +105,6 @@ cloudmarker.events.azpostgreslogdurationevent module
    :undoc-members:
    :show-inheritance:
 
-cloudmarker.events.azpostgresconnectionthrottlingevent module
--------------------------------------------------------------
-
-.. automodule:: cloudmarker.events.azpostgresconnectionthrottlingevent
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cloudmarker.events.azpostgreslogretentiondaysevent module
 ---------------------------------------------------------
 
@@ -117,6 +117,22 @@ cloudmarker.events.azsqldatabasetdeevent module
 -----------------------------------------------
 
 .. automodule:: cloudmarker.events.azsqldatabasetdeevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azstorageaccountallowtrustedservicesevent module
+-------------------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azstorageaccountallowtrustedservicesevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azstorageaccountdefaultnetworkaccessevent module
+-------------------------------------------------------------------
+
+.. automodule:: cloudmarker.events.azstorageaccountdefaultnetworkaccessevent
    :members:
    :undoc-members:
    :show-inheritance:
@@ -141,6 +157,30 @@ cloudmarker.events.azvmosdiskencryptionevent module
 ---------------------------------------------------
 
 .. automodule:: cloudmarker.events.azvmosdiskencryptionevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azwebappclientcertevent module
+-------------------------------------------------
+
+.. automodule:: cloudmarker.events.azwebappclientcertevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azwebapphttp20event module
+---------------------------------------------
+
+.. automodule:: cloudmarker.events.azwebapphttp20event
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloudmarker.events.azwebapphttpsevent module
+--------------------------------------------
+
+.. automodule:: cloudmarker.events.azwebapphttpsevent
    :members:
    :undoc-members:
    :show-inheritance:
