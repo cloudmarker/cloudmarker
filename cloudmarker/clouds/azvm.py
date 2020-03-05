@@ -219,7 +219,8 @@ def _process_vm_instance_view(vm_index, vm, vm_iv,
     record['ext'] = util.merge_dicts(
         record['ext'],
         _get_normalized_vm_statuses(vm_iv),
-        _get_normalized_vm_disk_encryption_status(vm, vm_iv)
+        _get_normalized_vm_disk_encryption_status(vm, vm_iv),
+        _get_vm_extension_list(vm_iv)
         )
     _log.info('Found vm_instance_view #%d: %s; %s',
               vm_index, vm.get('name'),
@@ -244,6 +245,24 @@ def _get_normalized_vm_statuses(vm_iv):
             code_elements = code.split('/', 1)
             normalized_statuses['power_state'] = code_elements[1].lower()
     return normalized_statuses
+
+
+def _get_vm_extension_list(vm_iv):
+    """Iterate over a list of virtual machine extensions.
+
+    Arguments:
+        vm_iv (dict): Raw virtual machine instance view record.
+
+    Returns:
+        dict: List of names of installed extensions
+
+    """
+    extensions = {}
+    extension_list = []
+    for e in vm_iv.get('extensions', []):
+        extension_list.append(e['name'])
+    extensions['extensions'] = extension_list
+    return extensions
 
 
 def _get_normalized_vm_disk_encryption_status(vm, vm_iv):
