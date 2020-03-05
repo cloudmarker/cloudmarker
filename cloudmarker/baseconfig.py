@@ -89,6 +89,9 @@ plugins:
   azpostgreslogretentiondaysevent:
     plugin: cloudmarker.events.azpostgreslogretentiondaysevent.AzPostgresLogRetentionDaysEvent
 
+  azvmextensionevent:
+      plugin: cloudmarker.events.azvmextensionevent.AzVMExtensionEvent
+
   mockevent:
     plugin: cloudmarker.events.mockevent.MockEvent
 
