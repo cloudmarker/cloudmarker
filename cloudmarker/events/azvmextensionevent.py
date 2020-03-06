@@ -26,6 +26,12 @@ class AzVMExtensionEvent:
             required (list): List of required extensions.
 
         """
+        if whitelisted is None:
+            whitelisted = []
+        if blacklisted is None:
+            blacklisted = []
+        if required is None:
+            required = []
         self._whitelisted = whitelisted
         self._blacklisted = blacklisted
         self._required = required
