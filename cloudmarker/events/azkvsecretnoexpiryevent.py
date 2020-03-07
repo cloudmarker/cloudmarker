@@ -1,9 +1,9 @@
 """Microsoft Azure Key Vault secret expiry event.
 
 This module defines the :class:`AzKVSecretNoExpiryEvent` class that
-identifies if a Key Vault secret without expiry set. This plugin works on the
-Key Vault secret properties found in the ``ext`` bucket of ``key_vault_secret``
-records.
+identifies if a Key Vault active (enabled) secret without expiry set.
+This plugin works on the Key Vault secret properties found in the
+``ext`` bucket of ``key_vault_secret`` records.
 """
 
 
@@ -45,9 +45,8 @@ class AzKVSecretNoExpiryEvent:
         if ext.get('record_type') != 'key_vault_secret':
             return
 
-        if ext.get('enabled') and ext.get('expiry_set'):
-            return
-        yield from _get_key_vault_secret_no_expiry_event(com, ext)
+        if ext.get('enabled') and (ext.get('expiry_set') is False):
+            yield from _get_key_vault_secret_no_expiry_event(com, ext)
 
     def done(self):
         """Perform cleanup work.
