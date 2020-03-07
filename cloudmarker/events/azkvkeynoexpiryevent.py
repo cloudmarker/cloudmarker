@@ -1,9 +1,9 @@
 """Microsoft Azure Key Vault key expiry event.
 
 This module defines the :class:`AzKVKeyNoExpiryEvent` class that
-identifies Key Vault keys without expiry set. This plugin works on the
-Key Vault key properties found in the ``ext`` bucket of ``key_vault_key``
-records.
+identifies Key Vault active (enabled) keys without expiry set. This
+plugin works on the Key Vault key properties found in the ``ext``
+bucket of ``key_vault_key`` records.
 """
 
 
@@ -45,9 +45,8 @@ class AzKVKeyNoExpiryEvent:
         if ext.get('record_type') != 'key_vault_key':
             return
 
-        if ext.get('enabled') and ext.get('expiry_set'):
-            return
-        yield from _get_key_vault_key_no_expiry_event(com, ext)
+        if ext.get('enabled') and (ext.get('expiry_set') is False):
+            yield from _get_key_vault_key_no_expiry_event(com, ext)
 
     def done(self):
         """Perform cleanup work.
