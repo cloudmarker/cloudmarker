@@ -19,7 +19,7 @@ venv: FORCE
 # and modification times.
 deps: FORCE
 	touch venv
-	. ./venv && pip3 install -r usr-requirements.txt
+	. ./venv && pip3 install -r requirements.txt
 	. ./venv && pip3 install -r dev-requirements.txt
 
 rmvenv: FORCE
