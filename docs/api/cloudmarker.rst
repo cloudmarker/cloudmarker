@@ -10,6 +10,7 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    cloudmarker.alerts
    cloudmarker.clouds
@@ -58,4 +59,3 @@ cloudmarker.workers module
    :members:
    :undoc-members:
    :show-inheritance:
-

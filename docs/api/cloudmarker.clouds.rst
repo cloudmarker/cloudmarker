@@ -17,6 +17,14 @@ cloudmarker.clouds.azcloud module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.clouds.azdisk module
+--------------------------------
+
+.. automodule:: cloudmarker.clouds.azdisk
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.clouds.azkv module
 ------------------------------
 
@@ -88,4 +96,3 @@ cloudmarker.clouds.mockcloud module
    :members:
    :undoc-members:
    :show-inheritance:
-

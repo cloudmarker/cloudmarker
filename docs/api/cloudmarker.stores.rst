@@ -40,4 +40,3 @@ cloudmarker.stores.splunkhecstore module
    :members:
    :undoc-members:
    :show-inheritance:
-

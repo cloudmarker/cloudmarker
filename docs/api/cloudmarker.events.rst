@@ -153,6 +153,14 @@ cloudmarker.events.azvmdatadiskencryptionevent module
    :undoc-members:
    :show-inheritance:
 
+cloudmarker.events.azvmextensionevent module
+--------------------------------------------
+
+.. automodule:: cloudmarker.events.azvmextensionevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cloudmarker.events.azvmosdiskencryptionevent module
 ---------------------------------------------------
 
@@ -216,4 +224,3 @@ cloudmarker.events.rdbmsenforcetlsevent module
    :members:
    :undoc-members:
    :show-inheritance:
-

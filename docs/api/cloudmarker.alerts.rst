@@ -24,4 +24,3 @@ cloudmarker.alerts.slackalert module
    :members:
    :undoc-members:
    :show-inheritance:
-
