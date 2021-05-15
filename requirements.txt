@@ -35,7 +35,7 @@ python-dateutil==2.8.1
 PyYAML==5.4
 requests==2.23.0
 requests-oauthlib==1.3.0
-rsa==4.0
+rsa==4.7
 schedule==0.6.0
 six==1.12.0
 slackclient==1.3.1
