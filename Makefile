@@ -55,7 +55,7 @@ coverage: FORCE
 # Note that this independently invoked isort exits with exit code 0
 # regardless of whether it finds problems with import statements or not.
 lint:
-	. ./venv && isort --quiet --diff --skip-glob "*/build/*"
+	. ./venv && isort --quiet --diff --skip-glob "*/build/*" .
 	. ./venv && pylama
 
 # The -M option for sphinx-apidoc puts the package documentation before
