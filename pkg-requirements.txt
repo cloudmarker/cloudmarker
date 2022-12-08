@@ -7,7 +7,7 @@ azure-mgmt-network==2.7.0
 azure-mgmt-resource==2.1.0
 azure-mgmt-storage==3.3.0
 cachetools==3.1.0
-certifi==2019.3.9
+certifi==2022.12.7
 cffi==1.12.3
 chardet==3.0.4
 cryptography==3.3.2
