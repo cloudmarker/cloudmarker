@@ -12,9 +12,6 @@ Cloudmarker is a cloud monitoring tool and framework.
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg?
    :target: https://github.com/cloudmarker/cloudmarker/blob/master/LICENSE.rst
 
-.. image:: https://travis-ci.com/cloudmarker/cloudmarker.svg?branch=master
-   :target: https://travis-ci.com/cloudmarker/cloudmarker
-
 .. image:: https://readthedocs.org/projects/cloudmarker/badge/?version=latest
    :target: https://cloudmarker.readthedocs.io/en/latest/?badge=latest
 
