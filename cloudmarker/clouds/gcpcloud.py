@@ -126,6 +126,7 @@ class GCPCloud:
                                                    None, self._key_file_path))
 
                 yield ('firewall', project_index, project)
+                yield('iam-policy', project_index, project)
 
                 zones = _get_resource_iterator(compute_resource.zones(),
                                                'items', self._key_file_path,
@@ -186,6 +187,7 @@ class GCPCloud:
             return
 
         project_id = project.get('projectId')
+        iterator = None
         try:
             if record_type == 'firewall':
                 resource = self._build_resource('compute', 'v1')
@@ -199,6 +201,13 @@ class GCPCloud:
                                                   'items', self._key_file_path,
                                                   project=project_id,
                                                   zone=zone)
+
+            elif record_type == 'iam-policy':
+                resource = self._build_resource('cloudresourcemanager', 'v1')
+                itr = resource.projects().getIamPolicy(resource=project_id,
+                                                       body={}).execute()
+                iterator = itr['bindings']
+
             else:
                 _log.warning('Unrecognized record_type: %s; %s', record_type,
                              util.outline_gcp_project(project_index,
@@ -233,35 +242,50 @@ class GCPCloud:
         record_type_map = {
             'compute': 'compute',
         }
-        for i, raw_record in enumerate(iterator):
-            record = {
-                'raw': raw_record,
-                'ext': {
-                    'cloud_type': 'gcp',
-                    'record_type': gcp_record_type,
-                    'project_id': project.get('projectId'),
-                    'project_name': project.get('name'),
-                    'zone': zone,
-                    'key_file_path': self._key_file_path,
-                    'client_email': self._client_email
-                },
-                'com': {
-                    'cloud_type': 'gcp',
-                    'record_type': record_type_map.get(gcp_record_type)
+
+        try:
+            for i, raw_record in enumerate(iterator):
+                record = {
+                    'raw': raw_record,
+                    'ext': {
+                        'cloud_type': 'gcp',
+                        'record_type': gcp_record_type,
+                        'project_id': project.get('projectId'),
+                        'project_name': project.get('name'),
+                        'zone': zone,
+                        'key_file_path': self._key_file_path,
+                        'client_email': self._client_email
+                    },
+                    'com': {
+                        'cloud_type': 'gcp',
+                        'record_type': record_type_map.get(gcp_record_type)
+                    }
                 }
-            }
 
-            _log.info('Found %s #%d: %s; %s', gcp_record_type, i,
-                      raw_record.get('name'),
-                      util.outline_gcp_project(project_index, project, zone,
-                                               self._key_file_path))
-            yield record
+                _log.info('Found %s #%d: %s; %s', gcp_record_type, i,
+                          raw_record,
+                          util.outline_gcp_project(project_index,
+                                                   project,
+                                                   zone,
+                                                   self._key_file_path))
+                yield record
 
-            if gcp_record_type == 'firewall':
-                yield from _get_normalized_firewall_rules(record,
-                                                          project_index,
-                                                          project,
-                                                          self._key_file_path)
+                if gcp_record_type == 'firewall':
+                    yield from \
+                        _get_normalized_firewall_rules(record,
+                                                       project_index,
+                                                       project,
+                                                       self._key_file_path)
+
+                elif gcp_record_type == 'iam-policy':
+                    yield from _get_iam_policy_rule(record)
+
+        except Exception as e:
+            _log.error('Failed to make record for %s; %s; error: %s: %s',
+                       gcp_record_type,
+                       util.outline_gcp_project(project_index, project, None,
+                                                self._key_file_path),
+                       type(e).__name__, e)
 
     def done(self):
         """Log a message that this plugin is done."""
@@ -297,6 +321,28 @@ def _get_resource_iterator(resource, key, key_file_path, **list_kwargs):
                    'list_kwargs: %s; key_file_path: %s; '
                    'error: %s: %s', key, list_kwargs,
                    key_file_path, type(e).__name__, e)
+
+
+def _get_iam_policy_rule(record):
+    """Get the iam record to look for Gmail accounts.
+
+    Gmail accounts are personally created and controllable accounts.
+    Organizations seldom have any control over them.
+
+    Hence for each Google Cloud Platform project, an account configured in a
+    project shouldn't be a Gmail account
+
+    Arguments:
+        record (dict): IAM-Policy record generated by this plugin.
+
+    Yield:
+        dict: A normalized IAM corporate login policy rule record with ``com``
+        bucket populated with iam-corp-policy rule properties in common
+        notation.
+
+    """
+    record['com']['record_type'] = 'iam_corp_login_policy_rule'
+    yield record
 
 
 def _get_normalized_firewall_rules(firewall_record, project_index,
